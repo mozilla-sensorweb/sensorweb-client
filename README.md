@@ -1,0 +1,3 @@
+# Sensorweb Client
+
+via Cordova
