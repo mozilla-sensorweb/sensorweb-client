@@ -13,7 +13,7 @@
     "jsx": "preserve"
  },
   "include": [
-    "www/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
