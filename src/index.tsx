@@ -141,9 +141,30 @@ class Root extends React.Component<RootProps, {}> {
     super(props);
   }
 
-  onWifiConnected() {
-    console.log('Connected to Wifi!');
-    this.props.uiState.wifiConnected = true;
+  onWifiConnected(ssidString: string, passwordString: string) {
+    let bluetoothManager = this.props.uiState.bluetoothManager;
+    if (bluetoothManager.connectedDeviceInfo === null) {
+      // XXX THIS IS AN ERROR
+      return;
+    }
+    let ssid: Uint8Array = new (window as any).TextEncoder('utf-8').encode(ssidString);
+    let password: Uint8Array = new (window as any).TextEncoder('utf-8').encode(passwordString);
+    let deviceInfo = bluetoothManager.connectedDeviceInfo;
+    bluetoothManager.write(deviceInfo, 'ec00', 'ffe1', ssid.slice(0, 20))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'ffe2', ssid.slice(20, 40)))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'ffe3', new (window as any).TextEncoder('utf-8').encode(ssid.byteLength.toString())))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'fff1', password.slice(0, 20)))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'fff2', password.slice(20, 40)))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'fff3', password.slice(40, 60)))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'fff4', password.slice(60, 80)))
+    .then(() => bluetoothManager.write(deviceInfo, 'ec00', 'fff5', new (window as any).TextEncoder('utf-8').encode(password.length.toString()))).then(() => {
+      console.log('WROTE!');
+      this.props.uiState.wifiConnected = true;
+    }, (err:any) => {
+      console.error('ERROR: ' + JSON.stringify(err));
+    })
+    //console.log('Connected to Wifi!');
+    //
   }
 
   render() {
@@ -158,6 +179,8 @@ class Root extends React.Component<RootProps, {}> {
       page = <FindingSensorPage key="FindingSensorPage" bluetoothManager={state.bluetoothManager} />;
     } else if (!state.wifiConnected) {
       page = <WifiSetupFlow key="WifiSetupFlow" onConnected={this.onWifiConnected.bind(this)} />;
+    } else {
+      page = <Page><h1>Wifi Done!</h1></Page>;
     }
     
     return (

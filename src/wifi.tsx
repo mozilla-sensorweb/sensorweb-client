@@ -72,7 +72,7 @@ function getCurrentSsid(): Promise<string> {
 }
 
 interface WifiSetupFlowProps {
-  onConnected(): void;
+  onConnected(ssid: string, password: string): void;
 }
 
 @observer
@@ -88,7 +88,10 @@ export class WifiSetupFlow extends React.Component<WifiSetupFlowProps, {}> {
   }
   
   onConfirm(password: string) {
-    this.props.onConnected(); 
+    if (!this.selectedNetwork) {
+      return;
+    }
+    this.props.onConnected(this.selectedNetwork.SSID, password); 
   }
 
   onSelectAnotherNetwork() {

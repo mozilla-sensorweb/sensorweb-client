@@ -174,15 +174,19 @@ export class BluetoothManager {
         this.state = BTState.Connected;
         reject(err);
       }, {
-        address: scanResult.address
+        address: scanResult.address,
+        clearCache: true
       });
     });
   }
 
-  write(discoverResult: DiscoverResult, serviceUuid: string, characteristicUuid: string): Promise<{}> {
+  write(discoverResult: DiscoverResult, serviceUuid: string, characteristicUuid: string, value: Uint8Array): Promise<{}> {
+    if (value.length === 0) {
+      return Promise.resolve({});
+    }
     return new Promise((resolve, reject) => {
-      console.log("WRITE? " + this.bluetoothle.bytesToEncodedString(this.bluetoothle.stringToBytes('hello')));
-      this.bluetoothle.writeQ((result: any) => {
+      console.log(`WRITE: ${characteristicUuid} ${value}`);
+      this.bluetoothle.write((result: any) => {
         resolve();
       }, (err: any) => {
         reject(err);
@@ -191,7 +195,7 @@ export class BluetoothManager {
         service: serviceUuid,
         characteristic: characteristicUuid,
         type: '',
-        value: this.bluetoothle.bytesToEncodedString(this.bluetoothle.stringToBytes('hello world third fourth fifth')),
+        value: this.bluetoothle.bytesToEncodedString(value),
       });
     });
   }
