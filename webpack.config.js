@@ -1,5 +1,6 @@
 var CleanWebpackPlugin = require('clean-webpack-plugin');
- 
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
 module.exports = {  
   entry: [
     'babel-polyfill',
@@ -17,7 +18,12 @@ module.exports = {
     loaders: [
       // note that babel-loader is configured to run after ts-loader
       { test: /\.ts(x?)$/, loader: 'babel-loader!ts-loader' },
-      { test: /\.css$/, loader: "style-loader!css-loader!postcss-loader" },
+      { test: /\.css$/,
+        loader: ExtractTextPlugin.extract('style-loader', ['css-loader', 'postcss-loader'])
+      },
+      { test: /\/assets\/images\/(.*?)$/,
+        loader: 'file-loader?name=leaflet-images/[name].[ext]'
+      },
       { test: /\.(eot|svg|ttf|woff|woff2)$/,
         loader: 'url-loader?limit=10000'
       }
@@ -33,6 +39,7 @@ module.exports = {
     ];
   },
   plugins: [
-    new CleanWebpackPlugin(['www'])
+    new CleanWebpackPlugin(['www']),
+    new ExtractTextPlugin('sensorweb.out.css')
   ]
 };

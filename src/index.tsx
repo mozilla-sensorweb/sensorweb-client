@@ -34,11 +34,15 @@ import { BluetoothManager, BTState } from './bluetooth';
 import { WifiSetupFlow } from './wifi';
 import './assets/normalize.css';
 import './assets/fonts/Fira-4.202/fira.css';
-import './assets/ui.css'; 
+import './ui/ui.css'; 
 import './assets/index.css';
 import 'file?name=[name].[ext]!./index.html';
 
 
+interface Location {
+  latitude: number,
+  longitude: number
+}
 
 class AppState {
   @observable language = 'en_US';
@@ -47,6 +51,8 @@ class AppState {
   @observable bluetoothEnabled = false;
   @observable sensorInRange = false;
   @observable wifiConnected = false;
+
+  @observable location: Location | undefined;
 
   deviceVersion = '';
   isAndroid = false;
@@ -131,6 +137,129 @@ class FindingSensorPage extends React.Component<FindingSensorPageProps, {}> {
   }
 }
 
+
+
+import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
+import './assets/leaflet.css';
+
+import Leaflet from 'leaflet';
+(Leaflet.Icon.Default as any).prototype.options.imagePath = 'leaflet-images/';
+import './assets/images/marker-icon-2x.png';
+import './assets/images/marker-shadow.png';
+
+
+interface AllowLocationPageProps {
+  onLocationSelected(location: Location): void;
+} 
+
+@observer
+class AllowLocationPage extends React.Component<AllowLocationPageProps, {}> {
+  @observable location: Location | undefined;
+
+  allowLocation() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 10000
+      });
+    }).then((location: any) => {
+      console.log('Locationffff: ' + location.coords.latitude + ' ' + location.coords.longitude + ' ' + location.coords.heading);
+      this.location = { latitude: location.coords.latitude, longitude: location.coords.longitude };
+    })
+  }
+  
+  confirmLocation() {
+    this.location && this.props.onLocationSelected(this.location);
+  }
+
+  render() {
+    if (!this.location) {
+      return <Page>
+        <h1>Finding Your Location</h1>
+        <p>Now that your sensor is connected to WiFi, we need to learn a bit more about where your sensor is located.</p>
+        <p>This information will be used [in various ways, but not bad ways].</p>  
+        <button onClick={this.allowLocation.bind(this)}>Allow Location</button>
+      </Page>;      
+    }
+
+    const position = [this.location.latitude, this.location.longitude];
+    return <Page>
+      <Map center={position} zoom={17} style={{height: '100vh', position: 'absolute', top: '0', left: '0', width: '100%', zIndex: '-1' }}>
+        <TileLayer
+          url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
+          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <Marker position={position}>
+          <Popup>
+            <span>A pretty CSS3 popup.<br/>Easily customizable.</span>
+          </Popup>
+        </Marker>
+      </Map>
+      <h1>Select Location</h1>
+      <button onClick={(e) => this.confirmLocation()} style={{position: 'absolute', bottom: '1rem', left: '1rem', width: 'calc(100% - 2rem)'}}>Confirm Location</button>
+    </Page>;
+  }
+}
+
+interface CompassPageProps {
+  location: Location
+}
+
+import 'leaflet-rotatedmarker';
+
+@observer
+class CompassPage extends React.Component<CompassPageProps, {}> {
+  @observable watchId: any;
+  @observable currentHeading: number | undefined;
+  
+  componentDidMount() {
+    this.watchId = (navigator as any).compass.watchHeading((heading: any) => {
+      this.currentHeading = heading.magneticHeading;
+      console.log('Locationffff: ' + heading.magneticHeading);
+
+      (this.refs['hello'] as any).leafletElement.setRotationAngle((this.currentHeading + 180) % 360);
+      (this.refs['hello'] as any).leafletElement._icon.style.transition = 'transform 50ms linear';
+    }, (err: any) => {
+      console.error('ERROR COMPASS ' + err);
+    }, {
+      frequency: 50
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.watchId) {
+      (navigator as any).compass.clearWatch(this.watchId);
+    }
+  }
+
+  confirmDirection() {
+
+  }
+
+  render() {
+    const position = [this.props.location.latitude, this.props.location.longitude];
+    return <Page>
+      <Map center={position} zoom={18} style={{height: '100vh', position: 'absolute', top: '0', left: '0', width: '100%', zIndex: '-1' }}>
+        <TileLayer
+          url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
+          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <Marker ref="hello" position={position} rotationAngle={180} rotationOrigin='50% 20%'>
+          <Popup>
+            <span>A pretty CSS3 popup.<br/>Easily customizable.</span>
+          </Popup>
+        </Marker>    
+      </Map>
+      <h1>Compass</h1>
+      <button onClick={(e) => this.confirmDirection()} style={{position: 'absolute', bottom: '1rem', left: '1rem', width: 'calc(100% - 2rem)'}}>Confirm Direction</button>
+    </Page>;
+  }
+}
+
+
+
+
 interface RootProps {
   uiState: AppState
 }
@@ -173,14 +302,18 @@ class Root extends React.Component<RootProps, {}> {
 
     if (!state.welcomeConfirmed) {
       page = <WelcomePage key="WelcomePage" onWelcomed={() => { state.welcomeConfirmed = true; }} />;
-    } else if (!state.bluetoothEnabled) {
-      page = <EnableBluetoothPage key="EnableBluetoothPage" bluetoothManager={state.bluetoothManager} />;
-    } else if (!state.sensorInRange) {
-      page = <FindingSensorPage key="FindingSensorPage" bluetoothManager={state.bluetoothManager} />;
-    } else if (!state.wifiConnected) {
-      page = <WifiSetupFlow key="WifiSetupFlow" onConnected={this.onWifiConnected.bind(this)} />;
+    // } else if (!state.bluetoothEnabled) {
+    //   page = <EnableBluetoothPage key="EnableBluetoothPage" bluetoothManager={state.bluetoothManager} />;
+    // } else if (!state.sensorInRange) {
+    //   page = <FindingSensorPage key="FindingSensorPage" bluetoothManager={state.bluetoothManager} />;
+    // } else if (!state.wifiConnected) {
+    //   page = <WifiSetupFlow key="WifiSetupFlow" onConnected={this.onWifiConnected.bind(this)} />;
+    } else if (!state.location) {
+      page = <AllowLocationPage key="AllowLocationPage" onLocationSelected={(location) => {
+        state.location = location;
+      }} />;
     } else {
-      page = <Page><h1>Wifi Done!</h1></Page>;
+      page = <CompassPage key="CompassPage" location={state.location} />;
     }
     
     return (
