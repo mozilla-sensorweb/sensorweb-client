@@ -1,12 +1,12 @@
 import React from 'react';
-import { Page, NavigationState, PageSpinner } from '../ui';
+import { Page, NavigationState, TutorialImage } from '../ui';
 import { observer } from 'mobx-react';
 import { when } from 'mobx';
 import { BluetoothManager, BTState } from '../bluetooth';
 
 interface FindingSensorPageProps {
-  nav: NavigationState,
-  bluetoothManager: BluetoothManager
+  nav: NavigationState;
+  bluetoothManager: BluetoothManager;
 }
 
 @observer
@@ -14,7 +14,7 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
   dispose: any;
 
   componentWillMount() {
-    this.props.bluetoothManager.connectToNearestSensor();
+    //this.props.bluetoothManager.connectToNearestSensor();
     this.dispose = when('bluetooth discovered',
       () => this.props.bluetoothManager.state === BTState.Discovered,
       () => this.props.nav.markComplete());
@@ -27,11 +27,11 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
   }
 
   render() {
-    return <Page nav={this.props.nav}>
-      <h1>Finding Sensor</h1>
-      <p>Move your phone close to the sensor.</p>
-      <p>State: {BTState[this.props.bluetoothManager.state]}</p>
-      <PageSpinner />
+    return <Page nav={this.props.nav} next={false} title='Finding Sensor'>
+      <TutorialImage src={require<string>('../assets/finding-sensor.svg')} />
+      <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>
+      <p className="instruction">Hold your phone near the sensor.</p>
+      <p style={{opacity: 0.1, textAlign: 'center'}}>{BTState[this.props.bluetoothManager.state]}</p>
     </Page>
   }
 }

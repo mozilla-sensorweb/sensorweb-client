@@ -3,7 +3,7 @@ import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
 
-import { Page, NavigationState, PageSpinner } from '../ui';
+import { Page, NavigationState } from '../ui';
 
 interface WifiScanResult {
   level: number; // -58
@@ -155,21 +155,18 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
 
   render() {
     return (
-      <Page nav={this.props.nav}>
+      <Page nav={this.props.nav} loading={this.scanning}>
         <h1>Connect to Wi-Fi</h1>
         <p>Select the Wi-Fi network you want your sensor to use.</p>
-        {this.scanning
-          ? <PageSpinner /> /* XXX: Spinner */
-          : <ul className="WifiList">
-              {this.availableNetworks.map((network) =>
-                <li key={network.SSID}
-                    data-ssid={network.SSID}
-                    onClick={(e) => this.props.onNetworkSelected(network)}>
-                  {network.SSID}
-                </li> /* XXX: lock icon */
-              )}
-            </ul>
-        }
+        <ul className="WifiList">
+        {this.availableNetworks.map((network) =>
+          <li key={network.SSID}
+              data-ssid={network.SSID}
+              onClick={(e) => this.props.onNetworkSelected(network)}>
+            {network.SSID}
+          </li> /* XXX: lock icon */
+        )}
+        </ul>
       </Page>
     );
   }

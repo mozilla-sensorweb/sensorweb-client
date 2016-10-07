@@ -35,4 +35,5 @@
     <plugin name="cordova-plugin-device-orientation" spec="~1.0.4" />
 
     <preference name="Orientation" value="portrait" />
+    <preference name="EnableViewportScale" value="true" /> <!-- iOS only -->
 </widget>

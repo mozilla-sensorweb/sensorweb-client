@@ -1,9 +1,12 @@
+// These imports inject dependencies like CSS and index.html
 import 'babel-polyfill';
-
 import injectTapEventPlugin from 'react-tap-event-plugin';
-// Needed for onTouchTap
-// http://stackoverflow.com/a/34015469/988941
-injectTapEventPlugin();
+injectTapEventPlugin(); // Needed for onTouchTap http://stackoverflow.com/a/34015469/988941
+import './assets/normalize.css';
+import './assets/fonts/Fira-4.202/fira.css';
+import './ui/ui.css';
+import './assets/index.css';
+import 'file?name=[name].[ext]!./index.html';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -14,11 +17,6 @@ import { Step, NavigationState } from './ui';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import { BluetoothManager, BTState } from './bluetooth';
-import './assets/normalize.css';
-import './assets/fonts/Fira-4.202/fira.css';
-import './ui/ui.css';
-import './assets/index.css';
-import 'file?name=[name].[ext]!./index.html';
 
 import { WelcomePage } from './pages/welcome';
 import { EnableBluetoothPage } from './pages/enableBluetooth';
@@ -26,7 +24,7 @@ import { FindingSensorPage } from './pages/findingSensor';
 
 class DeviceInfo {
   constructor() {
-    const device: any = (window as any).device || { platform: 'Web', version: ''};
+    const device: any = (window as any).device || { platform: 'Web', version: '' };
     this.platform = device.platform;
     this.version = device.version;
   }
@@ -87,8 +85,8 @@ class Root extends React.Component<RootProps, {}> {
       <Provider>
         <ReactCSSTransitionGroup
             transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
-            transitionEnterTimeout={1500}
-            transitionLeaveTimeout={1500}>
+            transitionEnterTimeout={1000}
+            transitionLeaveTimeout={1000}>
           <div key={nav.currentStep}>{pages[nav.currentStep]}</div>
         </ReactCSSTransitionGroup>
       </Provider>

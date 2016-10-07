@@ -68,7 +68,7 @@ export interface BluetoothLE {
   CALLBACK_TYPE_MATCH_LOST: number;
 }
 
-export interface ScanResult { 
+export interface ScanResult {
   rssi: number;
   name: string;
   address: string;
@@ -85,7 +85,8 @@ export interface DiscoverResult {
 
 
 export class FakeBluetoothLE {
-  
+  onBluetoothStateChanged: Success;
+
   private later(cb: (...args: any[]) => void, ...args: any[]) {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -96,7 +97,8 @@ export class FakeBluetoothLE {
   }
 
   initialize(success: Success, params: Params) {
-    this.later(success, { status: 'enabled' });
+    this.onBluetoothStateChanged = success;
+    this.later(success, { status: 'disabled' });
   }
 
   startScan(success: Success, error: Failure, params: Params) {
@@ -145,7 +147,10 @@ export class FakeBluetoothLE {
   }
 
   enable(success: Success, error: Failure) {
-    this.later(success);
+    this.later(() => {
+      this.onBluetoothStateChanged({ status: 'enabled' });
+      success({ status: 'enabled' });
+    });
   }
 
   // Note: not all of the possible values are defined here.
