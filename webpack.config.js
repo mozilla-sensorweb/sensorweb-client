@@ -1,7 +1,7 @@
 var CleanWebpackPlugin = require('clean-webpack-plugin');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-module.exports = {  
+module.exports = {
   entry: [
     'babel-polyfill',
     './src/index'
@@ -21,10 +21,7 @@ module.exports = {
       { test: /\.css$/,
         loader: ExtractTextPlugin.extract('style-loader', ['css-loader', 'postcss-loader'])
       },
-      { test: /\/assets\/images\/(.*?)$/,
-        loader: 'file-loader?name=leaflet-images/[name].[ext]'
-      },
-      { test: /\.(eot|svg|ttf|woff|woff2)$/,
+      { test: /\.(eot|svg|ttf|woff|woff2|png|jpg)$/,
         loader: 'url-loader?limit=10000'
       }
     ],

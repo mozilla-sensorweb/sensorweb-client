@@ -2,15 +2,13 @@ import React from 'react';
 import { Page, NavigationState } from '../ui';
 
 export let WelcomePage = (props: { nav: NavigationState }) => (
-  <Page nav={props.nav} title='Welcome'>
-    <p>Some exciting text here! That's short and fun.</p>
-    <a className="button" onClick={() => props.nav.markComplete()}>Get Started</a>
-    <p>Already have a sensor that's setup? Move your device closer to the sensor to
-       have it reconnect to your phone.</p>
-    <p>Don't have a sensor? Join in the fun now! And probably a few more lines of copy talking about
-    SensorWeb and its awesomeness.</p>
-    <a className="button secondary">Buy a Sensor Now</a>
-    <p>Copy about the app being for connecting with a sensor. If you want the data, please visit
-      &nbsp;<a href="#">https://sensorweb.com/</a>.</p>
+  <Page nav={props.nav} title='Welcome' hideHeader={true}>
+    <div style={{height: '14rem', margin: '0 -1rem', background: `url(${require<string>('../assets/welcome.jpg')}) 50% 13% / cover no-repeat`}}/>
+    <p className="instruction" style={{fontWeight:300}}>Thank you for buying a<br/>SensorWeb air quality sensor.</p>
+    <div>
+      <a className="button" onClick={() => props.nav.markComplete()}>Set up my sensor</a>
+      <p className="detail instruction">Don't have a sensor? <a href="#">Buy one here</a>.</p>
+    </div>
+    <p className="detail instruction">View sensor data at <a href="https://sensorweb.com/">sensorweb.com</a>.</p>
   </Page>
 );

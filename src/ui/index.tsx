@@ -72,6 +72,7 @@ interface PageProps {
   next?: boolean | null; // null means don't show the button, false means disabled, true/undefined means enabled
   title?: string;
   loading?: boolean;
+  hideHeader?: boolean;
 }
 
 @observer
@@ -91,7 +92,7 @@ export class Page extends React.Component<PageProps, {}> {
     const canGoNext = nav.currentStep < Step.length - 1 && this.props.next !== null;
 
     return <div className="Page">
-      <div className="page-header">
+      <div className="page-header" style={{ display: this.props.hideHeader ? 'none' : '' }}>
         <a className={'back-button' + (canGoBack ? '' : ' invisible')} onClick={() => this.onBack()} disabled={this.props.back === false}>Back</a>
         <h1>{this.props.title || ''}</h1>
         <a className={'next-button' + (canGoNext ? '' : ' invisible')} onClick={() => this.onNext()} disabled={this.props.next === false}>Next</a>

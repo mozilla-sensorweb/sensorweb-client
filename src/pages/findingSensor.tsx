@@ -14,10 +14,13 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
   dispose: any;
 
   componentWillMount() {
-    //this.props.bluetoothManager.connectToNearestSensor();
     this.dispose = when('bluetooth discovered',
       () => this.props.bluetoothManager.state === BTState.Discovered,
       () => this.props.nav.markComplete());
+
+    setTimeout(() => {
+      this.props.bluetoothManager.connectToNearestSensor();
+    }, 1000);
   }
 
   componentWillUnmount() {
@@ -28,10 +31,13 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
 
   render() {
     return <Page nav={this.props.nav} next={false} title='Finding Sensor'>
+      <div/>
       <TutorialImage src={require<string>('../assets/finding-sensor.svg')} />
       <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>
-      <p className="instruction">Hold your phone near the sensor.</p>
-      <p style={{opacity: 0.1, textAlign: 'center'}}>{BTState[this.props.bluetoothManager.state]}</p>
+      <div>
+        <p className="instruction">Hold your phone near the sensor.</p>
+        <p style={{opacity: 0.1, textAlign: 'center'}}>{BTState[this.props.bluetoothManager.state]}…</p>
+      </div>
     </Page>
   }
 }
