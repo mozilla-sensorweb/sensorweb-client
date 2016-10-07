@@ -1,18 +1,16 @@
 import React from 'react';
-//import ReactDOM from 'react-dom';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
 
-import { Page, PageSpinner } from './ui';
+import { Page, NavigationState, PageSpinner } from '../ui';
 
-//{"level":-58,"SSID":"","BSSID":"b8:9b:c9:5d:2e:6b","frequency":2452,"capabilities":"[WPA-PSK-CCMP+TKIP][WPA2-PSK-CCMP+TKIP][ESS]"}
 interface WifiScanResult {
-  level: number,
-  SSID: string,
-  BSSID: string,
-  frequency: number,
-  capabilities: string
+  level: number; // -58
+  SSID: string;
+  BSSID: string; // "b8:9b:c9:5d:2e:6b"
+  frequency: number; // 2452
+  capabilities: string; // "[WPA-PSK-CCMP+TKIP][WPA2-PSK-CCMP+TKIP][ESS]"
 }
 
 class FakeWifiWizard {
@@ -72,6 +70,7 @@ function getCurrentSsid(): Promise<string> {
 }
 
 interface WifiSetupFlowProps {
+  nav: NavigationState;
   onConnected(ssid: string, password: string): void;
 }
 
@@ -82,16 +81,16 @@ export class WifiSetupFlow extends React.Component<WifiSetupFlowProps, {}> {
 
   onNetworkSelected(network: WifiScanResult) {
     // If we could automatically select the current network, we've done it now.
-    // We don't want to try more than once.    
+    // We don't want to try more than once.
     this.attemptedCurrentNetwork = true;
     this.selectedNetwork = network;
   }
-  
+
   onConfirm(password: string) {
     if (!this.selectedNetwork) {
       return;
     }
-    this.props.onConnected(this.selectedNetwork.SSID, password); 
+    this.props.onConnected(this.selectedNetwork.SSID, password);
   }
 
   onSelectAnotherNetwork() {
@@ -101,10 +100,12 @@ export class WifiSetupFlow extends React.Component<WifiSetupFlowProps, {}> {
   render() {
     if (!this.selectedNetwork) {
       return <SelectWifiNetwork
+               nav={this.props.nav}
                attemptedCurrentNetwork={this.attemptedCurrentNetwork}
                onNetworkSelected={this.onNetworkSelected.bind(this)} />;
     } else {
       return <EnterPassword
+        nav={this.props.nav}
         network={this.selectedNetwork}
         onConfirm={this.onConfirm.bind(this)}
         onSelectAnotherNetwork={this.onSelectAnotherNetwork.bind(this)} />;
@@ -113,6 +114,7 @@ export class WifiSetupFlow extends React.Component<WifiSetupFlowProps, {}> {
 }
 
 interface SelectWifiNetworkProps {
+  nav: NavigationState;
   attemptedCurrentNetwork: boolean;
   onNetworkSelected(string: WifiScanResult): void;
 }
@@ -124,7 +126,7 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
 
   constructor(props: SelectWifiNetworkProps) {
     super(props);
-    
+
     setTimeout(() => {
       this.scan();
     }, 1000);
@@ -143,17 +145,17 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
 
         if (!this.props.attemptedCurrentNetwork && currentNetwork) {
           this.props.onNetworkSelected(currentNetwork);
-        } else {           
-          this.availableNetworks = networks;      
+        } else {
+          this.availableNetworks = networks;
           this.scanning = false;
         }
-      });      
+      });
     });
   }
 
   render() {
     return (
-      <Page>
+      <Page nav={this.props.nav}>
         <h1>Connect to Wi-Fi</h1>
         <p>Select the Wi-Fi network you want your sensor to use.</p>
         {this.scanning
@@ -164,7 +166,7 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
                     data-ssid={network.SSID}
                     onClick={(e) => this.props.onNetworkSelected(network)}>
                   {network.SSID}
-                </li> /* XXX: lock icon */            
+                </li> /* XXX: lock icon */
               )}
             </ul>
         }
@@ -175,7 +177,8 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
 
 
 interface EnterPasswordProps {
-  network: WifiScanResult,
+  nav: NavigationState;
+  network: WifiScanResult;
   onConfirm(password: string): void;
   onSelectAnotherNetwork(): void;
 }
@@ -189,10 +192,10 @@ class EnterPassword extends React.Component<EnterPasswordProps, {}> {
       this.props.onConfirm(this.typedPassword);
     }
   }
-  
-  render() {  
+
+  render() {
     return (
-      <Page>
+      <Page nav={this.props.nav}>
         <h1>Connect to Wi-Fi</h1>
         <p>Enter the password of your Wi-Fi network.</p>
         <p><label>Wi-Fi Network<br/>

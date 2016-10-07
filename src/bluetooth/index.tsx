@@ -206,3 +206,28 @@ export class BluetoothManager {
     });
   }
 }
+
+
+  // onWifiConnected(ssidString: string, passwordString: string) {
+  //   if (this.bluetoothManager.connectedDeviceInfo === null) {
+  //     // XXX THIS IS AN ERROR
+  //     return;
+  //   }
+  //   let encoder = new (window as any).TextEncoder('utf-8');
+  //   let ssid: Uint8Array = encoder.encode(ssidString);
+  //   let password: Uint8Array = encoder.encode(passwordString);
+  //   let deviceInfo = this.bluetoothManager.connectedDeviceInfo;
+  //   this.bluetoothManager.write(deviceInfo, 'ec00', 'ffe1', ssid.slice(0, 20))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'ffe2', ssid.slice(20, 40)))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'ffe3', encoder.encode(ssid.byteLength.toString())))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'fff1', password.slice(0, 20)))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'fff2', password.slice(20, 40)))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'fff3', password.slice(40, 60)))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'fff4', password.slice(60, 80)))
+  //   .then(() => this.bluetoothManager.write(deviceInfo, 'ec00', 'fff5', encoder.encode(password.length.toString()))).then(() => {
+  //     console.log('WROTE!');
+  //     this.wifiConnected = true;
+  //   }, (err:any) => {
+  //     console.error('ERROR: ' + JSON.stringify(err));
+  //   })
+  // }

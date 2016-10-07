@@ -58,21 +58,24 @@ input {
   font-size: 2rem;
 }
 
-.next-page-enter {
+.next-page-enter, .previous-page-enter,
+.next-page-leave, .previous-page-leave {
   transition: all 700ms ease;
+}
+
+.next-page-enter, .previous-page-leave.previous-page-leave-active {
   transform: translate3d(100vw, 0, 0);
   opacity: 0;
 }
-.next-page-enter.next-page-enter-active {
+.next-page-enter.next-page-enter-active, .previous-page-leave {
   transform: translate3d(0, 0, 0);
   opacity: 1;
 }
-.next-page-leave {
-  transition: all 700ms ease;
+.next-page-leave, .previous-page-enter.previous-page-enter-active {
   transform: translate3d(0, 0, 0);
   opacity: 1;
 }
-.next-page-leave.next-page-leave-active {
+.next-page-leave.next-page-leave-active, .previous-page-enter {
   transform: translate3d(-100vw, 0, 0);
   opacity: 0;
 }
