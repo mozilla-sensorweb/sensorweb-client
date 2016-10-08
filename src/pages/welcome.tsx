@@ -5,7 +5,7 @@ export let WelcomePage = (props: { nav: NavigationState }) => (
   <Page>
     <PageHeader nav={props.nav} title="SensorWeb" />
     <PageContent>
-      <div style={{flexGrow: 1, background: `url(${require<string>('../assets/welcome.jpg')}) 50% 13% / cover no-repeat`}}/>
+      <section style={{flexGrow: 1, background: `url(${require<string>('../assets/welcome.jpg')}) 50% 13% / cover no-repeat`}} />
       <section className="centered">
         <p style={{fontWeight:300}}>Thank you for buying a<br/>SensorWeb air quality sensor.</p>
       </section>
