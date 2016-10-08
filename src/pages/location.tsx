@@ -1,77 +1,150 @@
 import React from 'react';
+import { observable } from 'mobx';
+import { observer } from 'mobx-react';
+import { Page, PageHeader, PageContent, TutorialImage, NavigationState } from '../ui';
 
-export function AllowLocationPage() {
-  return <div></div>;
+
+export interface Location {
+  latitude: number;
+  longitude: number;
 }
 
-// import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
-// import './assets/leaflet.css';
+interface LocationState {
+  location: Location;
+}
 
-// import Leaflet from 'leaflet';
-// (Leaflet.Icon.Default as any).prototype.options.imagePath = 'leaflet-images/';
-// import './assets/images/marker-icon-2x.png';
-// import './assets/images/marker-shadow.png';
+interface AllowLocationPageProps {
+  nav: NavigationState;
+  locationState: LocationState;
+}
+
+@observer
+export class AllowLocationPage extends React.Component<AllowLocationPageProps, {}> {
+  allowLocation() {
+    navigator.geolocation.getCurrentPosition((location) => {
+      this.props.locationState.location = { latitude: location.coords.latitude, longitude: location.coords.longitude };
+      this.props.nav.markComplete();
+    }, (err: any) => {
+      console.error(err); // XXX display error
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 10000,
+      timeout: 10000
+    });
+  }
+
+  render() {
+    return <Page>
+      <PageHeader nav={this.props.nav} title="Allow Location" />
+      <PageContent>
+        <section className="centered">
+          <p>To map your air quality, please provide access to your location.</p>
+        </section>
+        <TutorialImage src={require<string>('../assets/location.svg')} />
+        <section>
+          <a className="button" onClick={this.allowLocation.bind(this)}>Allow Location</a>
+        </section>
+      </PageContent>
+    </Page>;
+  }
+}
 
 
-// import 'leaflet-rotatedmarker';
+interface SelectLocationPageProps {
+  nav: NavigationState;
+  locationState: LocationState;
+  //onLocationSelected(location: Location): void;
+}
 
-// interface Location {
-//   latitude: number;
-//   longitude: number;
-// }
+let MAPS_API_KEY = 'AIzaSyA_QULMpHLgnha_jMe-Ie-DancN1Bz4uEE';
+let MAPS_API_URL = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=initMap`;
+
+let script = document.createElement('script');
+script.async = true;
+
+script.src = MAPS_API_URL;
+document.getElementsByTagName('head')[0].appendChild(script);
+
+(window as any).initMap = function() {
+  console.log('maps loaded');
+}
+
+@observer
+export class SelectLocationPage extends React.Component<SelectLocationPageProps, {}> {
+  @observable location: Location | undefined;
+  map: google.maps.Map;
+  mapDiv: HTMLElement;
+  listeners: google.maps.MapsEventListener[];
+
+  componentDidMount() {
+    this.listeners = [];
+
+    // XXX: retry google maps, warn on no internet
+    if (typeof google === 'undefined') {
+      (window as any).initMap = this.loadMap.bind(this);
+    } else {
+      setTimeout(() => {
+        this.loadMap();
+      }, 0);
+    }
+
+  }
+
+  loadMap() {
+    if (!this.mapDiv) {
+      return;
+    }
+
+    this.map = new google.maps.Map(this.mapDiv, {
+      center: {
+        lat: this.props.locationState.location.latitude,
+        lng: this.props.locationState.location.longitude
+      },
+      zoom: 18,
+      disableDefaultUI: true,
+      zoomControl: true
+    });
+
+    let pin = document.createElement('div');
+    pin.style.position = 'absolute';
+    pin.style.top = 'calc(50% - 0.5rem)';
+    pin.style.left = 'calc(50% - 0.5rem)';
+    pin.style.width = '1rem';
+    pin.style.height = '1rem';
+    pin.style.backgroundColor = 'rgba(0, 100, 255, 0.5)';
+    pin.style.borderRadius = '50%';
+    this.mapDiv.appendChild(pin);
+
+    this.listeners.push(this.map.addListener('center_changed', () => {
+      let center = this.map.getCenter();
+      this.location = { latitude: center.lat(), longitude: center.lng() };
+      console.log('new center', this.map.getCenter().lat(), this.map.getCenter().lng);
+    }));
+  }
+
+  componentWillUnmount() {
+    (window as any).initMap = () => {};
+    this.listeners.map((listener) => listener.remove());
+    this.listeners = [];
+  }
 
 
-// interface AllowLocationPageProps {
-//   nav: NavigationState;
-//   onLocationSelected(location: Location): void;
-// }
+  confirmLocation() {
+    //this.location && this.props.onLocationSelected(this.location);
+  }
 
-// @observer
-// class AllowLocationPage extends React.Component<AllowLocationPageProps, {}> {
-//   @observable location: Location | undefined;
-
-//   allowLocation() {
-//     return new Promise((resolve, reject) => {
-//       navigator.geolocation.getCurrentPosition(resolve, reject, {
-//         enableHighAccuracy: true,
-//         maximumAge: 10000,
-//         timeout: 10000
-//       });
-//     }).then((location: any) => {
-//       console.log('Locationffff: ' + location.coords.latitude + ' ' + location.coords.longitude + ' ' + location.coords.heading);
-//       this.location = { latitude: location.coords.latitude, longitude: location.coords.longitude };
-//     })
-//   }
-
-//   confirmLocation() {
-//     this.location && this.props.onLocationSelected(this.location);
-//   }
-
-//   render() {
-//     if (!this.location) {
-//       return <Page nav={this.props.nav}>
-//         <h1>Finding Your Location</h1>
-//         <p>Now that your sensor is connected to WiFi, we need to learn a bit more about where your sensor is located.</p>
-//         <p>This information will be used [in various ways, but not bad ways].</p>
-//         <button onClick={this.allowLocation.bind(this)}>Allow Location</button>
-//       </Page>;
-//     }
-
-//     const position = [this.location.latitude, this.location.longitude];
-//     return <Page nav={this.props.nav}>
-//       <Map center={position} zoom={17} style={{height: '100vh', position: 'absolute', top: '0', left: '0', width: '100%', zIndex: '-1' }}>
-//         <TileLayer
-//           url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
-//           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-//         />
-//         <Marker position={position}>
-//           <Popup>
-//             <span>A pretty CSS3 popup.<br/>Easily customizable.</span>
-//           </Popup>
-//         </Marker>
-//       </Map>
-//       <h1>Select Location</h1>
-//       <button onClick={(e) => this.confirmLocation()} style={{position: 'absolute', bottom: '1rem', left: '1rem', width: 'calc(100% - 2rem)'}}>Confirm Location</button>
-//     </Page>;
-//   }
-// }
+  render() {
+    return <Page>
+      <PageHeader nav={this.props.nav} title="Select Location" />
+      <PageContent>
+        <section className="centered">
+          <p>Drag the map to adjust your location.</p>
+        </section>
+        <div className="map-div" ref={(e) => this.mapDiv = e} style={{flexGrow: 1}}>Map</div>
+        <section>
+          <a className="button" onClick={(e) => this.confirmLocation()}>Confirm Location</a>
+        </section>
+      </PageContent>
+    </Page>;
+  }
+}

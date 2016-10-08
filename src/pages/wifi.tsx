@@ -3,7 +3,7 @@ import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
 
-import { Page, NavigationState } from '../ui';
+import { Page, PageHeader, PageContent, NavigationState } from '../ui';
 
 interface WifiScanResult {
   level: number; // -58
@@ -155,18 +155,20 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
 
   render() {
     return (
-      <Page nav={this.props.nav} loading={this.scanning}>
-        <h1>Connect to Wi-Fi</h1>
-        <p>Select the Wi-Fi network you want your sensor to use.</p>
-        <ul className="WifiList">
-        {this.availableNetworks.map((network) =>
-          <li key={network.SSID}
-              data-ssid={network.SSID}
-              onClick={(e) => this.props.onNetworkSelected(network)}>
-            {network.SSID}
-          </li> /* XXX: lock icon */
-        )}
-        </ul>
+      <Page>
+        <PageHeader title="Connect to Wi-Fi" nav={this.props.nav} />
+        <PageContent>
+          <p>Select the Wi-Fi network you want your sensor to use.</p>
+          <ul className="WifiList">
+          {this.availableNetworks.map((network) =>
+            <li key={network.SSID}
+                data-ssid={network.SSID}
+                onClick={(e) => this.props.onNetworkSelected(network)}>
+              {network.SSID}
+            </li> /* XXX: lock icon */
+          )}
+          </ul>
+        </PageContent>
       </Page>
     );
   }
@@ -192,21 +194,23 @@ class EnterPassword extends React.Component<EnterPasswordProps, {}> {
 
   render() {
     return (
-      <Page nav={this.props.nav}>
-        <h1>Connect to Wi-Fi</h1>
-        <p>Enter the password of your Wi-Fi network.</p>
-        <p><label>Wi-Fi Network<br/>
-          <input readOnly onClick={(e) => this.props.onSelectAnotherNetwork()}
-              value={this.props.network.SSID} /></label></p>
-        {!/WPA|WEP/.test(this.props.network.capabilities) ? null :
-          <p><label>Password<br/>
-            <input type="password"
-                   value={this.typedPassword}
-                   onKeyDown={this.onKeyDown.bind(this)}
-                   onChange={(e) => this.typedPassword = e.currentTarget.value } />
-          </label></p>
-        }
-        <p><a href="#" onClick={(e) => this.props.onSelectAnotherNetwork()}>Choose a different Wi-Fi network</a></p>
+      <Page>
+        <PageHeader nav={this.props.nav} />
+        <PageContent>
+          <p>Enter the password of your Wi-Fi network.</p>
+          <p><label>Wi-Fi Network<br/>
+            <input readOnly onClick={(e) => this.props.onSelectAnotherNetwork()}
+                value={this.props.network.SSID} /></label></p>
+          {!/WPA|WEP/.test(this.props.network.capabilities) ? null :
+            <p><label>Password<br/>
+              <input type="password"
+                      value={this.typedPassword}
+                      onKeyDown={this.onKeyDown.bind(this)}
+                      onChange={(e) => this.typedPassword = e.currentTarget.value } />
+            </label></p>
+          }
+          <p><a href="#" onClick={(e) => this.props.onSelectAnotherNetwork()}>Choose a different Wi-Fi network</a></p>
+        </PageContent>
       </Page>
     );
   }

@@ -31,8 +31,7 @@ module.exports = {
   },
   postcss: function(webpack) {
     return [
-      require('postcss-cssnext')(),
-      require('postcss-nesting')()
+      require('postcss-cssnext')()
     ];
   },
   plugins: [

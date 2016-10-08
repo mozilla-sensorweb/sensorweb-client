@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/mozilla-sensorweb/sensorweb-client#readme",
   "devDependencies": {
-    "@types/leaflet": "^1.0.34",
+    "@types/googlemaps": "^3.25.35",
     "@types/lodash": "^4.14.36",
     "@types/react": "^0.14.36",
     "@types/react-addons-css-transition-group": "^0.14.17",
@@ -38,19 +38,16 @@
     "css-loader": "^0.25.0",
     "extract-text-webpack-plugin": "^1.0.1",
     "file-loader": "^0.9.0",
-    "leaflet": "^1.0.1",
     "lodash": "^4.16.2",
     "material-ui": "^0.15.4",
     "mobx": "^2.6.0",
     "mobx-react": "^3.5.6",
     "postcss-cssnext": "^2.8.0",
-    "postcss-import": "^8.1.2",
     "postcss-loader": "^0.13.0",
     "postcss-nesting": "^2.3.1",
     "react": "^15.3.2",
     "react-addons-css-transition-group": "^15.3.2",
     "react-dom": "^15.3.1",
-    "react-leaflet": "^1.0.0-rc.1",
     "react-tap-event-plugin": "^1.0.0",
     "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
@@ -61,7 +58,5 @@
     "watchify": "^3.7.0",
     "webpack": "^1.13.2"
   },
-  "dependencies": {
-    "leaflet-rotatedmarker": "^0.1.1"
-  }
+  "dependencies": {}
 }

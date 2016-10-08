@@ -4,11 +4,12 @@ import { observer } from 'mobx-react';
 
 export enum Step {
   Welcome,
+  AllowLocation,
+  SelectLocation,
+  //Compass,
   EnableBluetooth,
   FindSensor,
   Wifi,
-  Location,
-  Compass,
   length
 };
 
@@ -66,18 +67,17 @@ export class NavigationState {
   }
 }
 
-interface PageProps {
+
+interface PageHeaderProps {
   nav: NavigationState;
   back?: boolean | null;
   next?: boolean | null; // null means don't show the button, false means disabled, true/undefined means enabled
   title?: string;
-  loading?: boolean;
-  hideHeader?: boolean;
+  translucent?: boolean;
 }
 
 @observer
-export class Page extends React.Component<PageProps, {}> {
-
+export class PageHeader extends React.Component<PageHeaderProps, {}> {
   onBack() {
     this.props.nav.markPreviousStepIncomplete();
   }
@@ -91,19 +91,33 @@ export class Page extends React.Component<PageProps, {}> {
     const canGoBack = nav.currentStep > 0 && this.props.back !== null;
     const canGoNext = nav.currentStep < Step.length - 1 && this.props.next !== null;
 
-    return <div className="Page">
-      <div className="page-header" style={{ display: this.props.hideHeader ? 'none' : '' }}>
-        <a className={'back-button' + (canGoBack ? '' : ' invisible')} onClick={() => this.onBack()} disabled={this.props.back === false}>Back</a>
-        <h1>{this.props.title || ''}</h1>
-        <a className={'next-button' + (canGoNext ? '' : ' invisible')} onClick={() => this.onNext()} disabled={this.props.next === false}>Next</a>
-      </div>
-      <div className="page-content">
-        {this.props.loading ? <div className="PageSpinner"><img src={require<string>('../assets/spinner.svg')}/></div> : null}
-        {this.props.children}
-      </div>
+    return <div className={['page-header', this.props.translucent ? 'translucent' : 'opaque'].join(' ')}>
+      <a className={'back-button' + (canGoBack ? '' : ' invisible')} onClick={() => this.onBack()} disabled={this.props.back === false}>Back</a>
+      <h1>{this.props.title || ''}</h1>
+      <a className={'next-button' + (canGoNext ? '' : ' invisible')} onClick={() => this.onNext()} disabled={this.props.next === false}>Next</a>
     </div>;
   }
 }
+
+@observer
+export class Page extends React.Component<{}, {}> {
+  render() {
+    return <div className="Page">
+      {this.props.children}
+    </div>;
+  }
+}
+
+@observer
+export class PageContent extends React.Component<{}, {}> {
+  render() {
+    return <div className="page-content">
+      {this.props.children}
+    </div>;
+  }
+}
+
+
 
 
 export let TutorialImage = (props: {src: string}) => {

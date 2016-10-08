@@ -5,7 +5,6 @@ injectTapEventPlugin(); // Needed for onTouchTap http://stackoverflow.com/a/3401
 import './assets/normalize.css';
 import './assets/fonts/Fira-4.202/fira.css';
 import './ui/ui.css';
-import './assets/index.css';
 import 'file?name=[name].[ext]!./index.html';
 
 import React from 'react';
@@ -19,6 +18,7 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { BluetoothManager, BTState } from './bluetooth';
 
 import { WelcomePage } from './pages/welcome';
+import { AllowLocationPage, SelectLocationPage, Location } from './pages/location';
 import { EnableBluetoothPage } from './pages/enableBluetooth';
 import { FindingSensorPage } from './pages/findingSensor';
 
@@ -32,10 +32,15 @@ class DeviceInfo {
   version: string; // "5.1.1"
 }
 
-class AppState {
+interface ILocationState {
+  location: Location;
+}
+
+class AppState implements ILocationState {
   deviceInfo: DeviceInfo;
   nav: NavigationState;
   bluetoothManager: BluetoothManager;
+  @observable location: Location;
 
   constructor() {
     this.deviceInfo = new DeviceInfo();
@@ -64,7 +69,10 @@ class Root extends React.Component<RootProps, {}> {
     let pages = {
       [Step.Welcome]:
       <WelcomePage nav={nav} />,
-
+      [Step.AllowLocation]:
+      <AllowLocationPage nav={nav} locationState={appState} />,
+      [Step.SelectLocation]:
+      <SelectLocationPage nav={nav} locationState={appState} />,
       [Step.EnableBluetooth]:
       <EnableBluetoothPage nav={nav} bluetoothManager={appState.bluetoothManager} />,
 
@@ -74,8 +82,7 @@ class Root extends React.Component<RootProps, {}> {
       // [Step.Wifi]:
       // <WifiSetupFlow nav={nav} />,
 
-      // [Step.Location]:
-      // <AllowLocationPage nav={nav} />,
+
 
       // [Step.Compass]:
       // <CompassPage nav={nav} />,

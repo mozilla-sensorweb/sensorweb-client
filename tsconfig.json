@@ -10,7 +10,10 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "experimentalDecorators": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "types": [
+      "googlemaps"
+    ]
  },
   "include": [
     "src/**/*"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, NavigationState, TutorialImage } from '../ui';
+import { Page, PageHeader, PageContent, NavigationState, TutorialImage } from '../ui';
 import { BluetoothManager } from '../bluetooth';
 
 interface EnableBluetoothPageProps {
@@ -8,10 +8,12 @@ interface EnableBluetoothPageProps {
 }
 
 export function EnableBluetoothPage(props: EnableBluetoothPageProps) {
-  return <Page nav={props.nav} title='Enable Bluetooth' next={false}>
-      <div/>
-      <TutorialImage src={require<string>('../assets/bluetooth.svg')} />
-      <p className="instruction">Please enable bluetooth to continue.</p>
-      <a className="button " onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
+  return <Page>
+      <PageHeader nav={props.nav} title='Enable Bluetooth' next={false} />
+      <PageContent>
+        <TutorialImage src={require<string>('../assets/bluetooth.svg')} />
+        <p className="instruction">Please enable bluetooth to continue.</p>
+        <a className="button " onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
+      </PageContent>
     </Page>;
 }

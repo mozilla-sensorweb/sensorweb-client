@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, NavigationState } from '../ui';
+import { Page, PageHeader, PageContent, NavigationState } from '../ui';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 
@@ -36,7 +36,10 @@ class CompassPage extends React.Component<CompassPageProps, {}> {
   }
 
   render() {
-    return <Page nav={this.props.nav}></Page>;
+    return <Page>
+      <PageHeader nav={this.props.nav} />
+
+    </Page>;
     // const position = [this.props.location.latitude, this.props.location.longitude];
     // return <Page nav={this.props.nav}>
     //   <Map center={position} zoom={18} style={{height: '100vh', position: 'absolute', top: '0', left: '0', width: '100%', zIndex: '-1' }}>
