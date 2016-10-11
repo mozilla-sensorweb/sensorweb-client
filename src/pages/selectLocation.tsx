@@ -1,61 +1,11 @@
 import React from 'react';
-import { observable, autorunAsync, untracked, runInAction, action, computed } from 'mobx';
+import { observable, autorunAsync, untracked, runInAction, action, computed, reaction } from 'mobx';
 import { observer } from 'mobx-react';
-import { Page, PageHeader, PageContent, TutorialImage, NavigationState } from '../ui';
-
-
-export type Location = { lat: number, lng: number };
-
-interface LocationState {
-  location: Location;
-}
-
-interface AllowLocationPageProps {
-  nav: NavigationState;
-  locationState: LocationState;
-}
-
-@observer
-export class AllowLocationPage extends React.Component<AllowLocationPageProps, {}> {
-  @observable waitingForServer = false;
-
-  allowLocation() {
-    this.waitingForServer = true;
-    navigator.geolocation.getCurrentPosition((location) => {
-      // We don't set waitingForServer to false here, because we want the button to remain disabled as the view closes.
-      this.props.locationState.location = { lat: location.coords.latitude, lng: location.coords.longitude };
-      this.props.nav.markComplete();
-    }, (err: any) => {
-      this.waitingForServer = false;
-      console.error(err); // XXX display error
-    }, {
-      enableHighAccuracy: true,
-      maximumAge: 10000,
-      timeout: 10000
-    });
-  }
-
-  render() {
-    return <Page>
-      <PageHeader nav={this.props.nav} next={false} title="Allow Location" />
-      <PageContent>
-        <section className="centered">
-          <p>To map your air quality, please provide access to your location.</p>
-        </section>
-        <TutorialImage src={require<string>('../assets/location.svg')} />
-        <section>
-          <a className="button" disabled={this.waitingForServer} onClick={this.allowLocation.bind(this)}>Allow Location</a>
-        </section>
-      </PageContent>
-    </Page>;
-  }
-}
-
+import { Page, PageHeader, PageContent, NavigationState } from '../ui';
 
 interface SelectLocationPageProps {
   nav: NavigationState;
-  locationState: LocationState;
-  //onLocationSelected(location: Location): void;
+  locationState: { location: google.maps.LatLng };
 }
 
 let MAPS_API_KEY = 'AIzaSyA_QULMpHLgnha_jMe-Ie-DancN1Bz4uEE';
@@ -78,11 +28,12 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
   gpsControl: HTMLElement;
   addressInput: HTMLInputElement;
   disposers: (() => void)[] = [];
+  isDragging: boolean;
   @observable locationString: string = '';
   @observable typedAddress: string = '';
   @observable inputFocused: boolean = false;
   @observable waitingForGeocoding: boolean = false;
-  @observable currentGpsLocation: Location;
+  @observable currentGpsLocation: google.maps.LatLng;
 
 
   componentDidMount() {
@@ -101,7 +52,7 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
     // If we're already tracking the current GPS location, move it to match.
     let watchPositionId = navigator.geolocation.watchPosition((location) => {
       if (this.isCurrentlyTrackingGps) {
-        this.currentGpsLocation = { lat: location.coords.latitude, lng: location.coords.longitude };
+        this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
         this.props.locationState.location = this.currentGpsLocation;
       }
     }, (err: any) => {
@@ -116,8 +67,7 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
 
   @computed
   get isCurrentlyTrackingGps() {
-    return (this.currentGpsLocation.lat === this.props.locationState.location.lat
-         && this.currentGpsLocation.lng === this.props.locationState.location.lng);
+    return this.currentGpsLocation.equals(this.props.locationState.location);
   }
 
   loadMap() {
@@ -149,14 +99,20 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
     });
     this.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(this.gpsControl);
 
-    let listener = this.map.addListener('dragend', () => {
-      let center = this.map.getCenter();
-      this.props.locationState.location = { lat: center.lat(), lng: center.lng() };
+    let listener = this.map.addListener('center_changed', () => {
+      console.log("CENTER_CHANGED");
+      this.props.locationState.location = this.map.getCenter();
     });
     this.disposers.push(() => listener.remove());
 
     listener = this.map.addListener('dragstart', () => {
       this.gpsControl.classList.toggle('following', false);
+      this.isDragging = true;
+    });
+    this.disposers.push(() => listener.remove());
+    listener = this.map.addListener('dragend', () => {
+      this.isDragging = false;
+      this.props.locationState.location = this.map.getCenter();
     });
     this.disposers.push(() => listener.remove());
 
@@ -171,6 +127,10 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
         let geo = new google.maps.Geocoder();
         if (this.inputFocused) {
           console.log('not geocoding because inputFocused');
+          return;
+        }
+        if (this.isDragging) {
+          console.log('not geocoding because dragging');
           return;
         }
         if (this.locationString && this.isCurrentlyTrackingGps) {
@@ -189,10 +149,19 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
       });
     }, 1000));
 
+    this.disposers.push(reaction(() => this.props.locationState.location, () => {
+      if (this.isDragging) {
+        return; // Don't try to recenter the map while the user is dragging.
+      }
+      console.log("SET CENTER FROM LOC");
+      console.log(this.props.locationState.location.toUrlValue());
+      this.map.setCenter(this.props.locationState.location);
+    }));
+
     // When the keyboard pops up, recenter the map on the proper address.
     let resizeHandler = () => {
       google.maps.event.trigger(this.map, 'resize');
-      this.recenterOnLocation();
+      //this.recenterOnLocation();
     };
     addEventListener('resize', resizeHandler);
     this.disposers.push(() => {
@@ -203,11 +172,11 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
   componentDidUpdate() {
     google.maps.event.trigger(this.map, 'resize');
     this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
-    this.recenterOnLocation();
+    //this.recenterOnLocation();
   }
 
   recenterOnLocation() {
-    this.map.setCenter(this.props.locationState.location);
+    //this.map.setCenter(this.props.locationState.location);
   }
 
   componentWillUnmount() {
@@ -227,18 +196,19 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
       address: this.typedAddress
     }, (results, status) => {
       // XXX if no address, handle error (maybe clear input?)
+      if (!results || !results[0]) {
+        console.log('unable to geocode: ' + status);
+        this.addressInput.blur();
+        return;
+      }
       runInAction(() => {
         this.waitingForGeocoding = false;
         console.log('blur address');
         this.addressInput.blur();
-        this.props.locationState.location = {
-          lat: results[0].geometry.location.lat(),
-          lng: results[0].geometry.location.lng()
-        };
+        this.props.locationState.location = results[0].geometry.location;
         this.locationString = results[0].formatted_address;
         console.log('nulling typed address');
         this.typedAddress = '';
-        this.recenterOnLocation();
         console.log("RESULTS " + JSON.stringify(results), results);
       });
     });
@@ -246,7 +216,8 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
 
   render() {
     return <Page>
-      <PageHeader nav={this.props.nav} next={!this.waitingForGeocoding && !this.inputFocused} title="Select Location" />
+      <PageHeader nav={this.props.nav} title="Select Location"
+        next={!this.waitingForGeocoding && !this.inputFocused && (() => this.confirmLocation())} />
       <PageContent>
         <section className="centered">
           <p>Drag the map to adjust your location.</p>

@@ -9,11 +9,16 @@ interface EnableBluetoothPageProps {
 
 export function EnableBluetoothPage(props: EnableBluetoothPageProps) {
   return <Page>
-      <PageHeader nav={props.nav} title='Enable Bluetooth' next={false} />
+      <PageHeader nav={props.nav} title='Enable Bluetooth'
+        next={() => props.bluetoothManager.enable()} />
       <PageContent>
+        <section className="centered">
+          <p className="instruction">Please enable bluetooth to continue.</p>
+        </section>
         <TutorialImage src={require<string>('../assets/bluetooth.svg')} />
-        <p className="instruction">Please enable bluetooth to continue.</p>
-        <a className="button " onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
+        <section>
+          <a className="button" onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
+        </section>
       </PageContent>
     </Page>;
 }

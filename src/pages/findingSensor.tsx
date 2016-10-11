@@ -4,8 +4,11 @@ import { observer } from 'mobx-react';
 import { when } from 'mobx';
 import { BluetoothManager, BTState } from '../bluetooth';
 
+import { AppState } from '../state';
+
 interface FindingSensorPageProps {
   nav: NavigationState;
+  appState: AppState;
   bluetoothManager: BluetoothManager;
 }
 
@@ -16,11 +19,25 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
   componentWillMount() {
     this.dispose = when('bluetooth discovered',
       () => this.props.bluetoothManager.state === BTState.Discovered,
-      () => this.props.nav.markComplete());
+      () => this.sync());
 
     setTimeout(() => {
       this.props.bluetoothManager.connectToNearestSensor();
     }, 1000);
+  }
+
+  sync() {
+    let state = this.props.appState;
+    let payload = {
+      ssid: state.ssid,
+      password: state.password,
+      floor: state.floor,
+      lat: state.location.lat(),
+      lng: state.location.lng(),
+      direction: state.direction
+    };
+    console.log('WOULD SEND', payload);
+    this.props.nav.markComplete();
   }
 
   componentWillUnmount() {
@@ -30,16 +47,23 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
   }
 
   render() {
+    let state = this.props.appState;
     return <Page>
-      <PageHeader nav={this.props.nav} next={false} title='Finding Sensor' />
+      <PageHeader nav={this.props.nav} title='Finding Sensor' />
       <PageContent>
-        <TutorialImage src={require<string>('../assets/finding-sensor.svg')} />
+        {/*<TutorialImage src={require<string>('../assets/finding-sensor.svg')} />*/}
+        <section>
+          <p>SSID: {state.ssid} {state.password}<br/>
+            Floor: {state.floor}<br/>
+            Location: {state.location.lat()}, {state.location.lng()}<br/>
+            Direction: {state.direction}</p>
+        </section>
         <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>
         <div>
           <p className="instruction">Hold your phone near the sensor.</p>
           <p style={{opacity: 0.1, textAlign: 'center'}}>{BTState[this.props.bluetoothManager.state]}…</p>
         </div>
       </PageContent>
-    </Page>
+    </Page>;
   }
 }

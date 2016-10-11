@@ -18,43 +18,15 @@ import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { BluetoothManager, BTState } from './bluetooth';
 
 import { WelcomePage } from './pages/welcome';
-import { AllowLocationPage, SelectLocationPage, Location } from './pages/location';
+import { AllowLocationPage } from './pages/allowLocation';
+import { SelectLocationPage } from './pages/selectLocation';
 import { EnableBluetoothPage } from './pages/enableBluetooth';
 import { FindingSensorPage } from './pages/findingSensor';
+import { CompassPage } from './pages/compass';
+import { AltitudePage } from './pages/altitude';
+import { WifiCredentialsPage } from './pages/wifi';
 
-class DeviceInfo {
-  constructor() {
-    const device: any = (window as any).device || { platform: 'Web', version: '' };
-    this.platform = device.platform;
-    this.version = device.version;
-  }
-  platform: 'Android' | 'Web'; // "Android" // XXX: what is iOS?
-  version: string; // "5.1.1"
-}
-
-interface ILocationState {
-  location: Location;
-}
-
-class AppState implements ILocationState {
-  deviceInfo: DeviceInfo;
-  nav: NavigationState;
-  bluetoothManager: BluetoothManager;
-  @observable location: Location;
-
-  constructor() {
-    this.deviceInfo = new DeviceInfo();
-    this.nav = new NavigationState();
-    this.bluetoothManager = new BluetoothManager((window as any).bluetoothle, this.deviceInfo.platform === 'Android' );
-
-    autorun(() => {
-      const btState = this.bluetoothManager.state;
-      this.nav.mark(
-        Step.EnableBluetooth,
-        btState !== BTState.Disabled && btState !== BTState.Initializing);
-    });
-  }
-}
+import { AppState } from './state';
 
 interface RootProps {
   appState: AppState;
@@ -73,27 +45,34 @@ class Root extends React.Component<RootProps, {}> {
       <AllowLocationPage nav={nav} locationState={appState} />,
       [Step.SelectLocation]:
       <SelectLocationPage nav={nav} locationState={appState} />,
+      [Step.Compass]:
+      <CompassPage nav={nav} location={appState.location} saveCompassDirection={(degrees) => {
+        appState.direction = degrees;
+      } } />,
+      [Step.Altitude]:
+      <AltitudePage nav={nav} floor={appState.floor} saveAltitude={(floor) => {
+        appState.floor = floor;
+      } } />,
+
+      [Step.Wifi]:
+      <WifiCredentialsPage nav={nav} onConfirm={(network, password) => {
+        console.log('CONFIRM', network, password);
+      } } />,
+
       [Step.EnableBluetooth]:
       <EnableBluetoothPage nav={nav} bluetoothManager={appState.bluetoothManager} />,
 
       [Step.FindSensor]:
-      <FindingSensorPage nav={nav} bluetoothManager={appState.bluetoothManager} />
-
-      // [Step.Wifi]:
-      // <WifiSetupFlow nav={nav} />,
-
-
-
-      // [Step.Compass]:
-      // <CompassPage nav={nav} />,
+      <FindingSensorPage nav={nav} bluetoothManager={appState.bluetoothManager}
+        appState={appState} />,
     };
 
     return (
       <Provider>
         <ReactCSSTransitionGroup
-            transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
-            transitionEnterTimeout={1000}
-            transitionLeaveTimeout={1000}>
+          transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
+          transitionEnterTimeout={1000}
+          transitionLeaveTimeout={1000}>
           <div key={nav.currentStep}>{pages[nav.currentStep]}</div>
         </ReactCSSTransitionGroup>
       </Provider>
@@ -106,6 +85,7 @@ document.addEventListener('deviceready', () => {
   // certain Cordova APIs are unavailable until after this event fires.
   let nav = new NavigationState();
   let appState = new AppState();
+  (window as any).appState = appState;
 
   ReactDOM.render(
     <div className="root">

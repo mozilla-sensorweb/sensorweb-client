@@ -5,7 +5,7 @@ import { uniqBy } from 'lodash';
 
 import { Page, PageHeader, PageContent, NavigationState } from '../ui';
 
-interface WifiScanResult {
+export interface WifiScanResult {
   level: number; // -58
   SSID: string;
   BSSID: string; // "b8:9b:c9:5d:2e:6b"
@@ -69,64 +69,21 @@ function getCurrentSsid(): Promise<string> {
   });
 }
 
-interface WifiSetupFlowProps {
+interface WifiCredentialsPageProps {
   nav: NavigationState;
-  onConnected(ssid: string, password: string): void;
+  onConfirm(ssid: string, password: string): void;
 }
 
 @observer
-export class WifiSetupFlow extends React.Component<WifiSetupFlowProps, {}> {
-  @observable selectedNetwork: WifiScanResult | null = null;
-  @observable attemptedCurrentNetwork = false;
-
-  onNetworkSelected(network: WifiScanResult) {
-    // If we could automatically select the current network, we've done it now.
-    // We don't want to try more than once.
-    this.attemptedCurrentNetwork = true;
-    this.selectedNetwork = network;
-  }
-
-  onConfirm(password: string) {
-    if (!this.selectedNetwork) {
-      return;
-    }
-    this.props.onConnected(this.selectedNetwork.SSID, password);
-  }
-
-  onSelectAnotherNetwork() {
-    this.selectedNetwork = null;
-  }
-
-  render() {
-    if (!this.selectedNetwork) {
-      return <SelectWifiNetwork
-               nav={this.props.nav}
-               attemptedCurrentNetwork={this.attemptedCurrentNetwork}
-               onNetworkSelected={this.onNetworkSelected.bind(this)} />;
-    } else {
-      return <EnterPassword
-        nav={this.props.nav}
-        network={this.selectedNetwork}
-        onConfirm={this.onConfirm.bind(this)}
-        onSelectAnotherNetwork={this.onSelectAnotherNetwork.bind(this)} />;
-    }
-  }
-}
-
-interface SelectWifiNetworkProps {
-  nav: NavigationState;
-  attemptedCurrentNetwork: boolean;
-  onNetworkSelected(string: WifiScanResult): void;
-}
-
-@observer
-class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
+export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProps, {}> {
   @observable availableNetworks: WifiScanResult[] = [];
   @observable scanning = true;
+  @observable typedPassword = '';
+  @observable firstScanComplete = false;
+  @observable selectedNetwork?: WifiScanResult;
+  @observable choosingNetwork = false;
 
-  constructor(props: SelectWifiNetworkProps) {
-    super(props);
-
+  componentWillMount() {
     setTimeout(() => {
       this.scan();
     }, 1000);
@@ -139,77 +96,95 @@ class SelectWifiNetwork extends React.Component<SelectWifiNetworkProps, {}> {
       scanForWifiNetworks().then((networks) => {
         networks = networks.slice();
         networks.sort((a, b) => a.SSID.localeCompare(b.SSID));
+        this.availableNetworks = networks;
 
         let currentNetwork = networks.find((network) => network.SSID === ssid);
-        console.log('current netowrk = ' + currentNetwork + ' ssid ' + ssid);
+        console.log('current network = ' + currentNetwork + ' ssid ' + ssid);
 
-        if (!this.props.attemptedCurrentNetwork && currentNetwork) {
-          this.props.onNetworkSelected(currentNetwork);
-        } else {
-          this.availableNetworks = networks;
-          this.scanning = false;
+        this.scanning = false;
+        if (!this.firstScanComplete && currentNetwork) {
+          this.onNetworkSelected(currentNetwork);
         }
+        this.firstScanComplete = true;
       });
     });
   }
 
-  render() {
+  onKeyDown(event: KeyboardEvent) {
+    if (event.keyCode === 13) {
+      this.submit();
+    }
+  }
+
+  onNetworkSelected(network: WifiScanResult) {
+    // If we could automatically select the current network, we've done it now.
+    // We don't want to try more than once.
+    this.selectedNetwork = network;
+    this.choosingNetwork = false;
+  }
+
+  submit() {
+    if (this.selectedNetwork) {
+      this.props.onConfirm(this.selectedNetwork.SSID, this.typedPassword);
+      this.props.nav.markComplete();
+    }
+  }
+
+  onSelectAnotherNetwork() {
+    this.choosingNetwork = true;
+  }
+
+  renderSelectWifiNetworkModal() {
     return (
-      <Page>
-        <PageHeader title="Connect to Wi-Fi" nav={this.props.nav} />
+      <Page modal visible={this.choosingNetwork}>
+        <PageHeader nav={this.props.nav} title="Select Network" back={() => {
+          this.choosingNetwork = false;
+        }} />
         <PageContent>
-          <p>Select the Wi-Fi network you want your sensor to use.</p>
-          <ul className="WifiList">
-          {this.availableNetworks.map((network) =>
-            <li key={network.SSID}
-                data-ssid={network.SSID}
-                onClick={(e) => this.props.onNetworkSelected(network)}>
-              {network.SSID}
-            </li> /* XXX: lock icon */
-          )}
-          </ul>
+          <section>
+            <p>Select the Wi-Fi network you want your sensor to use.</p>
+          </section>
+          <section style={{flexGrow: 1}}>
+            <ul className="list" style={{height: '100%'}}>
+            {this.availableNetworks.map((network) =>
+              <li key={network.SSID}
+                  data-ssid={network.SSID}
+                  onClick={(e) => this.onNetworkSelected(network)}>
+                {network.SSID}
+              </li> /* XXX: lock icon */
+            )}
+            </ul>
+          </section>
         </PageContent>
       </Page>
     );
   }
-}
-
-
-interface EnterPasswordProps {
-  nav: NavigationState;
-  network: WifiScanResult;
-  onConfirm(password: string): void;
-  onSelectAnotherNetwork(): void;
-}
-
-@observer
-class EnterPassword extends React.Component<EnterPasswordProps, {}> {
-  @observable typedPassword = '';
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.keyCode === 13) {
-      this.props.onConfirm(this.typedPassword);
-    }
-  }
 
   render() {
     return (
-      <Page>
-        <PageHeader nav={this.props.nav} />
+      <Page loading={!this.firstScanComplete}>
+        {this.renderSelectWifiNetworkModal()}
+        <PageHeader nav={this.props.nav} title='Connect to Wi-Fi'
+          next={this.submit.bind(this)} />
         <PageContent>
-          <p>Enter the password of your Wi-Fi network.</p>
-          <p><label>Wi-Fi Network<br/>
-            <input readOnly onClick={(e) => this.props.onSelectAnotherNetwork()}
-                value={this.props.network.SSID} /></label></p>
-          {!/WPA|WEP/.test(this.props.network.capabilities) ? null :
-            <p><label>Password<br/>
-              <input type="password"
-                      value={this.typedPassword}
-                      onKeyDown={this.onKeyDown.bind(this)}
-                      onChange={(e) => this.typedPassword = e.currentTarget.value } />
-            </label></p>
-          }
-          <p><a href="#" onClick={(e) => this.props.onSelectAnotherNetwork()}>Choose a different Wi-Fi network</a></p>
+          <section>
+            <p>Enter the password of your Wi-Fi network.</p>
+          </section>
+          <section>
+            <p><label htmlFor="password">Network Name</label><br/>
+              <input id="ssid" readOnly onClick={(e) => this.onSelectAnotherNetwork()}
+                  value={this.selectedNetwork ? this.selectedNetwork.SSID : ''} /></p>
+            {this.selectedNetwork && /WPA|WEP/.test(this.selectedNetwork.capabilities) &&
+              <p><label htmlFor="password">Password</label><br/>
+                <input id="password"
+                        value={this.typedPassword}
+                        onKeyDown={this.onKeyDown.bind(this)}
+                        onChange={(e) => this.typedPassword = e.currentTarget.value } />
+              </p>
+            }
+            <p className="detail"><a href="#" onClick={(e) => this.onSelectAnotherNetwork()}>
+              Choose a different Wi-Fi network</a></p>
+          </section>
         </PageContent>
       </Page>
     );

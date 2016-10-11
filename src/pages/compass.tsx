@@ -5,56 +5,137 @@ import { observable } from 'mobx';
 
 interface CompassPageProps {
   nav: NavigationState;
-  location: Location;
+  location: google.maps.LatLng;
+  saveCompassDirection(direction: number): void;
+}
+
+let STATIC_MAPS_API_KEY = 'AIzaSyAzdnYcY71seAeev_Damc1I-FUClkE5_-Q';
+
+let STATIC_MAP_BASE_URL = 'https://maps.googleapis.com/maps/api/staticmap?';
+
+let FakeCompass = {
+  watchHeading(cb: any, errback: any, params: any): number {
+    return setInterval(() => {
+      cb({ magneticHeading: Date.now() / 50 % 360 });
+    }, 100);
+  },
+  clearWatch(id: number): void {
+    clearInterval(id);
+  }
+};
+
+function toCardinalDirection(degrees: number) {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return directions[Math.floor((degrees / (360 / directions.length)) + 0.5) % directions.length];
 }
 
 @observer
-class CompassPage extends React.Component<CompassPageProps, {}> {
+export class CompassPage extends React.Component<CompassPageProps, {}> {
   @observable watchId: any;
-  @observable currentHeading: number | undefined;
+  @observable currentHeading: number = 0;
+  @observable showManualPopup: boolean = false;
+  compass: any = (navigator as any).compass || FakeCompass;
+  mapUrl: string;
+
+  componentWillMount() {
+    this.mapUrl = this.getStaticMapUrl();
+  }
+
+  getStaticMapUrl() {
+    let loc = this.props.location;
+    let params: any = {
+      center: loc.lat() + ',' + loc.lng(),
+      zoom: 20,
+      size: document.body.clientWidth + 'x' + document.body.clientWidth,
+      scale: 2, // higher-resolution
+      key: STATIC_MAPS_API_KEY,
+      //signature: '' // XXX : should get a signature for APIs
+      style: [
+        'element:labels|visibility:off'
+      ]
+    };
+
+    return STATIC_MAP_BASE_URL + Object.keys(params).map((key) => {
+      let values: any = params[key];
+      if (!Array.isArray(params[key])) {
+        values = [values];
+      }
+      return values.map((value: any) => key + '=' + encodeURIComponent(value)).join('&');
+    }).join('&');
+  }
 
   componentDidMount() {
-    // this.watchId = (navigator as any).compass.watchHeading((heading: any) => {
-    //   this.currentHeading = heading.magneticHeading;
-    //   (this.refs['hello'] as any).leafletElement.setRotationAngle((this.currentHeading + 180) % 360);
-    //   (this.refs['hello'] as any).leafletElement._icon.style.transition = 'transform 50ms linear';
-    // }, (err: any) => {
-    //   console.error('ERROR COMPASS ' + err);
-    // }, {
-    //   frequency: 50
-    // });
+    this.watchId = this.compass.watchHeading((heading: any) => {
+      this.currentHeading = heading.magneticHeading;
+    }, (err: any) => {
+      console.error('ERROR COMPASS ' + err);
+    }, {
+      frequency: 50
+    });
   }
 
   componentWillUnmount() {
-    // if (this.watchId) {
-    //   (navigator as any).compass.clearWatch(this.watchId);
-    // }
+    this.compass.clearWatch(this.watchId);
   }
 
-  confirmDirection() {
+  confirmAutomaticDirection() {
+    this.props.saveCompassDirection(this.currentHeading);
+    this.props.nav.markComplete();
+  }
 
+  confirmManualDirection(degrees: number) {
+    this.showManualPopup = false;
+    this.props.saveCompassDirection(degrees);
+    this.props.nav.markComplete();
   }
 
   render() {
-    return <Page>
-      <PageHeader nav={this.props.nav} />
+    let manualPopup: any = null;
 
+    if (this.showManualPopup) {
+      manualPopup = <div className="modal-popup" onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          this.showManualPopup = false;
+        }
+      }}>
+        <div className="manual-direction-entry">
+          <ul className="list">
+            <li className="list-item-header">Select Direction</li>
+            <li onClick={() => this.confirmManualDirection(0)}>North</li>
+            <li onClick={() => this.confirmManualDirection(90)}>East</li>
+            <li onClick={() => this.confirmManualDirection(180)}>South</li>
+            <li onClick={() => this.confirmManualDirection(270)}>West</li>
+          </ul>
+        </div>
+      </div>;
+    }
+
+    return <Page>
+       {manualPopup}
+      <PageHeader nav={this.props.nav} title='Direction'
+        next={this.confirmAutomaticDirection.bind(this)} />
+      <PageContent>
+        <section className="centered">
+          <p>Hold your phone so that it points <em>away</em> from your house, toward the outdoors.</p>
+          <p className="detail">Or <a href="#" onClick={() => this.showManualPopup = true }>manually enter your direction</a>.</p>
+        </section>
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flex: '1 1 0px',
+          overflow: 'hidden'
+         }}>
+          <img style={{width: '100%', height: 'auto', display: 'block'}} src={this.mapUrl} />
+          <img className='compass-pointer'
+            style={{transform: `rotate(${this.currentHeading}deg)`}}
+            src={require<string>('../assets/compass-pointer.svg')} />
+        </div>
+        <section>
+          <a className="button" onClick={(e) => this.confirmAutomaticDirection()}>Confirm Direction</a>
+        </section>
+      </PageContent>
     </Page>;
-    // const position = [this.props.location.latitude, this.props.location.longitude];
-    // return <Page nav={this.props.nav}>
-    //   <Map center={position} zoom={18} style={{height: '100vh', position: 'absolute', top: '0', left: '0', width: '100%', zIndex: '-1' }}>
-    //     <TileLayer
-    //       url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
-    //       attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    //     />
-    //     <Marker ref="hello" position={position} rotationAngle={180} rotationOrigin='50% 20%'>
-    //       <Popup>
-    //         <span>A pretty CSS3 popup.<br/>Easily customizable.</span>
-    //       </Popup>
-    //     </Marker>
-    //   </Map>
-    //   <h1>Compass</h1>
-    //   <button onClick={(e) => this.confirmDirection()} style={{position: 'absolute', bottom: '1rem', left: '1rem', width: 'calc(100% - 2rem)'}}>Confirm Direction</button>
-    // </Page>;
   }
 }

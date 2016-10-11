@@ -1,15 +1,17 @@
 import React from 'react';
 import { observable, computed, action } from 'mobx';
 import { observer } from 'mobx-react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 export enum Step {
   Welcome,
   AllowLocation,
   SelectLocation,
-  //Compass,
+  Compass,
+  Altitude,
+  Wifi,
   EnableBluetooth,
   FindSensor,
-  Wifi,
   length
 };
 
@@ -67,11 +69,10 @@ export class NavigationState {
   }
 }
 
-
 interface PageHeaderProps {
   nav: NavigationState;
-  back?: boolean | null;
-  next?: boolean | null; // null means don't show the button, false means disabled, true/undefined means enabled
+  back?: (() => any) | false | null;
+  next?: (() => any) | false | null;
   title?: string;
   translucent?: boolean;
 }
@@ -79,32 +80,62 @@ interface PageHeaderProps {
 @observer
 export class PageHeader extends React.Component<PageHeaderProps, {}> {
   onBack() {
-    this.props.nav.markPreviousStepIncomplete();
+    if (typeof this.props.back === 'function') {
+      this.props.back();
+    } else {
+      this.props.nav.markPreviousStepIncomplete();
+    }
   }
 
   onNext() {
-    this.props.nav.markComplete();
+    if (typeof this.props.next === 'function') {
+      this.props.next();
+    }
   }
 
   render() {
     const nav = this.props.nav;
-    const canGoBack = nav.currentStep > 0 && this.props.back !== null;
-    const canGoNext = nav.currentStep < Step.length - 1 && this.props.next !== null;
+    const backAvailable = nav.currentStep > 0 && this.props.back !== false;
+    const nextAvailable = nav.currentStep < Step.length - 1 && this.props.next != null;
+    const backEnabled = backAvailable;
+    const nextEnabled = typeof this.props.next === 'function';
 
     return <div className={['page-header', this.props.translucent ? 'translucent' : 'opaque'].join(' ')}>
-      <a className={'back-button' + (canGoBack ? '' : ' invisible')} onClick={() => this.onBack()} disabled={this.props.back === false}>Back</a>
+      <a className={'back-button' + (backAvailable ? '' : ' invisible')}
+        onClick={() => this.onBack()} disabled={!backEnabled}>Back</a>
       <h1>{this.props.title || ''}</h1>
-      <a className={'next-button' + (canGoNext ? '' : ' invisible')} onClick={() => this.onNext()} disabled={this.props.next === false}>Next</a>
+      <a className={'next-button' + (nextAvailable ? '' : ' invisible')}
+        onClick={() => this.onNext()} disabled={!nextEnabled}>Next</a>
     </div>;
   }
 }
 
+interface PageProps {
+  loading?: boolean;
+  modal?: boolean;
+  visible?: boolean;
+}
 @observer
-export class Page extends React.Component<{}, {}> {
+export class Page extends React.Component<PageProps, {}> {
   render() {
-    return <div className="Page">
+    let classNames = ['Page'];
+    this.props.loading && classNames.push('loading');
+    this.props.modal && classNames.push('modal-page');
+
+    let page = <div className={classNames.join(' ')}>
       {this.props.children}
     </div>;
+
+    if (this.props.modal) {
+      return <ReactCSSTransitionGroup
+        transitionName="modal"
+        transitionEnterTimeout={1000}
+        transitionLeaveTimeout={1000}>
+        {this.props.visible && page}
+      </ReactCSSTransitionGroup>
+    } else {
+      return page;
+    }
   }
 }
 
@@ -112,14 +143,17 @@ export class Page extends React.Component<{}, {}> {
 export class PageContent extends React.Component<{}, {}> {
   render() {
     return <div className="page-content">
+      <div className='PageSpinner'>
+        <div>
+          <img src={require<string>('../assets/spinner.svg')}/>
+        </div>
+      </div>
       {this.props.children}
     </div>;
   }
 }
 
 
-
-
 export let TutorialImage = (props: {src: string}) => {
-  return <img className="TutorialImage" src={props.src} />
+  return <section className="TutorialImage"><img src={props.src} /></section>;
 };

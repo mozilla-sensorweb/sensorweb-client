@@ -30,10 +30,10 @@ if (!(window as any).cordova) {
 // close
 export class BluetoothManager {
   @observable state = BTState.Initializing;
-  @observable connectedDeviceInfo: DiscoverResult | null;
+  @observable connectedDeviceInfo?: DiscoverResult | null;
 
   bluetoothle: BluetoothLE | FakeBluetoothLE;
-  
+
   private isAndroid: boolean;
 
   MAX_SCAN_TIME = 15000;
@@ -42,7 +42,7 @@ export class BluetoothManager {
   constructor(bluetoothle: BluetoothLE, isAndroid: boolean) {
     this.bluetoothle = bluetoothle;
     this.isAndroid = isAndroid;
-    
+
     bluetoothle.initialize(this.onBluetoothStateChanged.bind(this), {
       request: false, // If true, immediately prompt them to enable bluetooth
       statusReceiver: true, // Receive status notifications when the state changes
@@ -72,7 +72,7 @@ export class BluetoothManager {
   connectToNearestSensor() {
     const SERVICE_UUID = 'ec00';
     const CHARACTERISTIC_UUID = 'fff1';
-    
+
     return this.scanForDeviceWithService(SERVICE_UUID).then((info) => {
       return this.connect(info);
     }).then((scanResult) => {
@@ -87,8 +87,8 @@ export class BluetoothManager {
 
   stopScanning() {
     if (this.state !== BTState.Scanning) {
-      throw new Error(`Unable to stopScanning() while in ${BTState[this.state]} state.`);  
-    }    
+      throw new Error(`Unable to stopScanning() while in ${BTState[this.state]} state.`);
+    }
     this.state = BTState.StoppingScan;
     return new Promise((resolve) => {
       this.bluetoothle.stopScan(() => {
@@ -101,10 +101,10 @@ export class BluetoothManager {
       });
     });
   }
-  
+
   scanForDeviceWithService(requiredServiceUuid: string): Promise<ScanResult> {
     if (this.state !== BTState.Idle) {
-      throw new Error(`Unable to scan() while in ${BTState[this.state]} state.`);      
+      throw new Error(`Unable to scan() while in ${BTState[this.state]} state.`);
     }
     return new Promise((resolve, reject) => {
       // Abort after MAX_SCAN_TIME milliseconds.
