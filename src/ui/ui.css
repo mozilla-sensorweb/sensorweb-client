@@ -25,17 +25,15 @@ body {
   overflow: hidden;
 }
 
-// Hide the placeholder text when an input is focused
-input:focus::-webkit-input-placeholder { color:transparent; }
-input:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */
-input:focus::-moz-placeholder { color:transparent; } /* FF 19+ */
-input:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */
 
+// Hide the placeholder text when an input is focused
+input:focus::placeholder { color: transparent; }
+// Firefox doesn't apply this rule unless it's after the pseudo-standard one
+input:focus::-moz-placeholder { color: transparent; }
 
 h1, h2, h3, h4,h5, h6, p, ol, ul, dl, pre {
   margin-top: 0;
 }
-
 
 // section:nth-child(1) { background: #faf }
 // section:nth-child(2) { background: #afa }
@@ -55,10 +53,6 @@ section.unpadded {
 section :last-child {
   margin-bottom: 0;
 }
-.button {
-  margin-bottom: 1em;
-}
-
 
 label {
   font-size: smaller;
@@ -81,7 +75,8 @@ input {
   border: 0px none; /*1px solid var(--button-border);*/
   color: white;
   padding: 1rem 1rem;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1em;
+  border-radius: 6px;
   cursor: pointer;
   &.small {
     padding: 0.5rem 1rem;

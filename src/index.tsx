@@ -88,6 +88,9 @@ document.addEventListener('deviceready', () => {
 
 
   document.addEventListener('backbutton', () => {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+      (document.activeElement as HTMLInputElement).blur();
+    }
     appState.nav.markPreviousStepIncomplete();
   });
 
