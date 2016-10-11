@@ -83,9 +83,14 @@ class Root extends React.Component<RootProps, {}> {
 document.addEventListener('deviceready', () => {
   // We must not construct AppState until after 'deviceready', because
   // certain Cordova APIs are unavailable until after this event fires.
-  let nav = new NavigationState();
   let appState = new AppState();
   (window as any).appState = appState;
+
+
+  document.addEventListener('backbutton', () => {
+    appState.nav.markPreviousStepIncomplete();
+  });
+
 
   ReactDOM.render(
     <div className="root">

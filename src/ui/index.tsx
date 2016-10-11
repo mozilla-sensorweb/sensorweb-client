@@ -58,6 +58,7 @@ export class NavigationState {
 
   @action
   markPreviousStepIncomplete() {
+    console.log('mark prev incomplete + '+ this.currentStep);
     let step = this.currentStep;
     if (step > 0) {
       // XXX: This step always automatically finishes, since bluetooth is enabled at this point.

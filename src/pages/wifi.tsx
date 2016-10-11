@@ -13,6 +13,10 @@ export interface WifiScanResult {
   capabilities: string; // "[WPA-PSK-CCMP+TKIP][WPA2-PSK-CCMP+TKIP][ESS]"
 }
 
+function networkRequiresPassword(network: WifiScanResult): boolean {
+  return /WPA|WEP/.test(network.capabilities);
+}
+
 class FakeWifiWizard {
   getScanResults(params: {}, listHandler: (networks: WifiScanResult[]) => void, err: (err: any) => void) {
     setTimeout(() => {
@@ -94,7 +98,7 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
     if (!this.selectedNetwork) {
       return false;
     } else {
-      return /WPA|WEP/.test(this.selectedNetwork.capabilities);
+      return networkRequiresPassword(this.selectedNetwork);
     }
   }
 
@@ -163,6 +167,9 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
               <li key={network.SSID}
                   data-ssid={network.SSID}
                   onClick={(e) => this.onNetworkSelected(network)}>
+                {networkRequiresPassword(network) &&
+                  <img src={require<string>('../assets/lock.svg')}
+                    className="wifi-password-lock-icon" />}
                 {network.SSID}
               </li> /* XXX: lock icon */
             )}

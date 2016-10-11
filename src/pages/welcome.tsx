@@ -3,7 +3,7 @@ import { Page, PageHeader, PageContent, NavigationState } from '../ui';
 
 export let WelcomePage = (props: { nav: NavigationState }) => (
   <Page>
-    <PageHeader nav={props.nav} title="SensorWeb" />
+    <PageHeader nav={props.nav} title="SensorWeb Setup" next={() => props.nav.markComplete()} />
     <PageContent>
       <section className="borderless" style={{flexGrow: 1, background: `url(${require<string>('../assets/welcome.jpg')}) 50% 13% / cover no-repeat`}} />
       <section className="centered">

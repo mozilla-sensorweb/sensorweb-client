@@ -161,7 +161,6 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
     // When the keyboard pops up, recenter the map on the proper address.
     let resizeHandler = () => {
       google.maps.event.trigger(this.map, 'resize');
-      //this.recenterOnLocation();
     };
     addEventListener('resize', resizeHandler);
     this.disposers.push(() => {
@@ -172,11 +171,6 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
   componentDidUpdate() {
     google.maps.event.trigger(this.map, 'resize');
     this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
-    //this.recenterOnLocation();
-  }
-
-  recenterOnLocation() {
-    //this.map.setCenter(this.props.locationState.location);
   }
 
   componentWillUnmount() {
@@ -236,7 +230,7 @@ export class SelectLocationPage extends React.Component<SelectLocationPageProps,
           {/* NOTE: We use onMouseDown for the first button because it arrives before onBlur, which causes the button to swap to
           the confirmLocation button before we have a chance to handle the event. */}
           {this.inputFocused
-            ? <a className="button small" disabled={this.waitingForGeocoding} onMouseDown={(e) => this.findManuallyEnteredAddress()}>Find Address</a>
+            ? <a className="button" disabled={this.waitingForGeocoding} onMouseDown={(e) => this.findManuallyEnteredAddress()}>Find Address</a>
             : <a className="button" disabled={this.waitingForGeocoding} onClick={(e) => this.confirmLocation()}>Confirm Location</a>}
         </section>
       </PageContent>

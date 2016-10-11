@@ -413,3 +413,8 @@ ul.list {
   }
 }
 
+.wifi-password-lock-icon {
+  float: right;
+  width: 1em;
+  height: 1.4em;
+}
