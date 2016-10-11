@@ -1,5 +1,5 @@
 import React from 'react';
-import { observable } from 'mobx';
+import { observable, computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
 
@@ -89,6 +89,15 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
     }, 1000);
   }
 
+  @computed
+  get requiresPassword() {
+    if (!this.selectedNetwork) {
+      return false;
+    } else {
+      return /WPA|WEP/.test(this.selectedNetwork.capabilities);
+    }
+  }
+
   scan() {
     this.scanning = true;
 
@@ -134,6 +143,10 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
     this.choosingNetwork = true;
   }
 
+  isValid() {
+    return this.selectedNetwork && (!this.requiresPassword || this.typedPassword);
+  }
+
   renderSelectWifiNetworkModal() {
     return (
       <Page modal visible={this.choosingNetwork}>
@@ -165,7 +178,7 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
       <Page loading={!this.firstScanComplete}>
         {this.renderSelectWifiNetworkModal()}
         <PageHeader nav={this.props.nav} title='Connect to Wi-Fi'
-          next={this.submit.bind(this)} />
+          next={this.isValid() && this.submit.bind(this)} />
         <PageContent>
           <section>
             <p>Enter the password of your Wi-Fi network.</p>
@@ -174,7 +187,7 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
             <p><label htmlFor="password">Network Name</label><br/>
               <input id="ssid" readOnly onClick={(e) => this.onSelectAnotherNetwork()}
                   value={this.selectedNetwork ? this.selectedNetwork.SSID : ''} /></p>
-            {this.selectedNetwork && /WPA|WEP/.test(this.selectedNetwork.capabilities) &&
+            {this.requiresPassword &&
               <p><label htmlFor="password">Password</label><br/>
                 <input id="password"
                         value={this.typedPassword}

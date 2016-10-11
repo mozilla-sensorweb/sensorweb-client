@@ -12,10 +12,18 @@ interface AltitudePageProps {
 @observer
 export class AltitudePage extends React.Component<AltitudePageProps, {}> {
   @observable floor?: number;
+  input: HTMLInputElement;
 
   componentWillMount() {
     this.floor = this.props.floor;
   }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.input.focus();
+    }, 1000); // XXX: we really just want this to happen after the transition
+  }
+
   isValid() {
     return this.floor != null && Number.isInteger(this.floor);
   }
@@ -38,7 +46,7 @@ export class AltitudePage extends React.Component<AltitudePageProps, {}> {
         </section>
         <section style={{flexGrow: 1}}>
           <p>Which floor is your sensor on?</p>
-          <input type="number" value={this.floor || ''} style={{fontSize: 'larger'}} onChange={(e) => {
+          <input type="number" ref={(el) => this.input = el} value={this.floor || ''} style={{fontSize: 'larger'}} onChange={(e) => {
             if (isNaN(e.currentTarget.valueAsNumber)) {
               e.currentTarget.value = '';
               this.floor = undefined;
