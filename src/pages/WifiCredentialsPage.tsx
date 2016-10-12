@@ -3,7 +3,8 @@ import { observable, computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
 
-import { Page, PageHeader, PageContent, NavigationState } from '../ui';
+import { Page, PageHeader, PageContent } from '../ui';
+import { NavigationState } from '../state';
 
 export interface WifiScanResult {
   level: number; // -58
@@ -79,7 +80,7 @@ interface WifiCredentialsPageProps {
 }
 
 @observer
-export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProps, {}> {
+export default class WifiCredentialsPage extends React.Component<WifiCredentialsPageProps, {}> {
   @observable availableNetworks: WifiScanResult[] = [];
   @observable scanning = true;
   @observable typedPassword = '';
@@ -156,23 +157,23 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
       <Page modal visible={this.choosingNetwork}>
         <PageHeader nav={this.props.nav} title="Select Network" back={() => {
           this.choosingNetwork = false;
-        }} />
+        } } />
         <PageContent>
-          <section>
+          <section className="instruction">
             <p>Select the Wi-Fi network you want your sensor to use.</p>
           </section>
-          <section style={{flexGrow: 1}}>
-            <ul className="list" style={{height: '100%'}}>
-            {this.availableNetworks.map((network) =>
-              <li key={network.SSID}
+          <section style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+            <ul className="list" style={{ flexGrow: 1, flexBasis: '100px' }}>
+              {this.availableNetworks.map((network) =>
+                <li key={network.SSID}
                   data-ssid={network.SSID}
                   onClick={(e) => this.onNetworkSelected(network)}>
-                {networkRequiresPassword(network) &&
-                  <img src={require<string>('../assets/lock.svg')}
-                    className="wifi-password-lock-icon" />}
-                {network.SSID}
-              </li> /* XXX: lock icon */
-            )}
+                  {networkRequiresPassword(network) &&
+                    <img src={require<string>('../assets/lock.svg')}
+                      className="wifi-password-lock-icon" />}
+                  {network.SSID}
+                </li> /* XXX: lock icon */
+              )}
             </ul>
           </section>
         </PageContent>
@@ -184,22 +185,27 @@ export class WifiCredentialsPage extends React.Component<WifiCredentialsPageProp
     return (
       <Page loading={!this.firstScanComplete}>
         {this.renderSelectWifiNetworkModal()}
-        <PageHeader nav={this.props.nav} title='Connect to Wi-Fi'
+        <PageHeader nav={this.props.nav} title="Connect to Wi-Fi"
           next={this.isValid() && this.submit.bind(this)} />
         <PageContent>
-          <section>
+          <section className="instruction">
             <p>Enter the password of your Wi-Fi network.</p>
           </section>
           <section>
-            <p><label htmlFor="password">Network Name</label><br/>
-              <input id="ssid" readOnly onClick={(e) => this.onSelectAnotherNetwork()}
-                  value={this.selectedNetwork ? this.selectedNetwork.SSID : ''} /></p>
+            <p><label htmlFor="password">Network Name</label><br />
+              <input id="ssid"
+                readOnly
+                onClick={(e) => this.onSelectAnotherNetwork()}
+                style={{ fontSize: 'larger' }}
+                value={this.selectedNetwork ? this.selectedNetwork.SSID : ''} /></p>
             {this.requiresPassword &&
-              <p><label htmlFor="password">Password</label><br/>
+              <p><label htmlFor="password">Password</label><br />
                 <input id="password"
-                        value={this.typedPassword}
-                        onKeyDown={this.onKeyDown.bind(this)}
-                        onChange={(e) => this.typedPassword = e.currentTarget.value } />
+                  type="password"
+                  value={this.typedPassword}
+                  onKeyDown={this.onKeyDown.bind(this)}
+                  style={{ fontSize: 'larger' }}
+                  onChange={(e) => this.typedPassword = e.currentTarget.value} />
               </p>
             }
             <p className="detail"><a href="#" onClick={(e) => this.onSelectAnotherNetwork()}>

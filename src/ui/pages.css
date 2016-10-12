@@ -1,0 +1,246 @@
+
+.Page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  &.modal-page {
+    z-index: 100;
+    background: #f5f5f5;
+  }
+}
+
+
+.PageHeader {
+  flex-shrink: 0;
+
+  & .header-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  & h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 300;
+  }
+
+  & .progress {
+    display: flex;
+    & .progress-dot {
+      width: 5px;
+      height: 5px;
+      margin: 2px;
+      border-radius: 50%;
+      border: 1px solid #999;
+      &.complete {
+        background: #999;
+      }
+    }
+  }
+
+  &.translucent {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 1;
+  }
+
+  & .back-button, & .next-button {
+    cursor: pointer;
+    width: 4rem;
+    text-align: center;
+    padding: 1em 0;
+    font-size: smaller;
+    font-weight: 300;
+    color: #06c;
+    &:active {
+      color: #0af;
+    }
+
+    &.invisible {
+      visibility: hidden;
+    }
+
+    &[disabled] {
+      pointer-events: none;
+      opacity: 0.2;
+      color: black;
+    }
+  }
+}
+
+.modal-enter, .modal-leave {
+  transition: transform 300ms ease-out;
+}
+.modal-enter, .modal-leave.modal-leave-active {
+  transform: translateY(100%);
+}
+.modal-enter.modal-enter-active, .modal-leave {
+  transform: translateY(0);
+}
+
+.PageContent {
+  transform: translate3d(0, 0, 0); /* without this, this spinner isn't positioned correctly? */
+  position: relative;
+  flex-grow: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.next-page-enter > .Page > .PageContent, .previous-page-enter > .Page > .PageContent,
+.next-page-leave > .Page > .PageContent, .previous-page-leave > .Page > .PageContent {
+  transition: all 700ms ease;
+  transition-property: opacity, transform;
+}
+
+.next-page-enter > .Page > .PageContent, .previous-page-leave.previous-page-leave-active > .Page > .PageContent {
+  transform: translate3d(100vw, 0, 0);
+  opacity: 0;
+}
+.next-page-enter.next-page-enter-active > .Page > .PageContent, .previous-page-leave > .Page > .PageContent,
+.next-page-leave > .Page > .PageContent, .previous-page-enter.previous-page-enter-active > .Page > .PageContent {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+.next-page-leave.next-page-leave-active > .Page > .PageContent, .previous-page-enter > .Page > .PageContent {
+  transform: translate3d(-100vw, 0, 0);
+  opacity: 0;
+  overflow-y: hidden;
+}
+
+.next-page-enter .PageHeader, .previous-page-enter .PageHeader,
+.next-page-leave .PageHeader, .previous-page-leave .PageHeader {
+  transition: all 200ms ease;
+}
+
+.next-page-enter .PageHeader, .previous-page-leave.previous-page-leave-active .PageHeader,
+.next-page-leave.next-page-leave-active .PageHeader, .previous-page-enter .PageHeader {
+  opacity: 0;
+}
+.next-page-enter.next-page-enter-active .PageHeader, .previous-page-leave .PageHeader,
+.next-page-leave .PageHeader, .previous-page-enter.previous-page-enter-active .PageHeader {
+  opacity: 1;
+}
+
+.next-page-enter, .next-page-leave, .previous-page-enter, .previous-page-leave {
+  pointer-events: none;
+}
+
+.InlineSpinner {
+  display: block;
+  width: 80px;
+  height: 80px;
+  opacity: 0.5;
+  margin: 2rem auto;
+}
+
+.PageSpinner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  //background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+
+  & > div {
+    background: white;
+    padding: 0.5rem;
+    border-radius: 50%;
+    //backdrop-filter: blur(10px);
+    box-shadow: 0.3rem 0.3rem 2rem rgba(0, 0, 0, 0.3);
+  }
+
+  & img {
+    display: block;
+    width: 50px;
+    height: 50px;
+    opacity: 0.6;
+  }
+  visibility: hidden;
+  transition: opacity 0.5s ease 0s, visibility 0s linear 0.5s;
+  opacity: 0;
+}
+
+.Page.loading {
+  pointer-events: none;
+}
+/*.Page.loading .PageSpinner {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}*/
+
+#PageLoader {
+  height: 4px;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  background-color: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms linear;
+
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 0px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left center;
+    height: 4px;
+    background-color: var(--selection-background);
+  }
+
+  &.loading {
+    opacity: 1;
+    &::before {
+      transform: scaleX(1);
+      transition: transform 5s ease;
+    }
+  }
+
+  &.loaded {
+    transition-duration: 1s;
+    opacity: 0;
+    &::before {
+      transition-duration: 500ms;
+      transform: scaleX(1.5);
+    }
+  }
+}
+
+
+
+
+/*@keyframes loading {
+    from {left: -200px; width: 30%;}
+    50% {width: 30%;}
+    70% {width: 70%;}
+    80% { left: 50%;}
+    95% {left: 120%;}
+    to {left: 100%;}
+}
+*/
+/*@keyframes loading {
+    from { left: 0; width: 0%; }
+    50% { left: 0; width: 80%; }
+    to { left: 100%; }
+}*/

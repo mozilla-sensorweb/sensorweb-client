@@ -1,5 +1,6 @@
 import React from 'react';
-import { Page, PageHeader, PageContent, NavigationState } from '../ui';
+import { Page, PageHeader, PageContent } from '../ui';
+import { NavigationState } from '../state';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 
@@ -30,7 +31,7 @@ function toCardinalDirection(degrees: number) {
 }
 
 @observer
-export class CompassPage extends React.Component<CompassPageProps, {}> {
+export default class CompassPage extends React.Component<CompassPageProps, {}> {
   @observable watchId: any;
   @observable currentHeading: number = 0;
   @observable showManualPopup: boolean = false;
@@ -45,7 +46,7 @@ export class CompassPage extends React.Component<CompassPageProps, {}> {
     let loc = this.props.location;
     let params: any = {
       center: loc.lat() + ',' + loc.lng(),
-      zoom: 20,
+      zoom: 19,
       size: document.body.clientWidth + 'x' + document.body.clientWidth,
       scale: 2, // higher-resolution
       key: STATIC_MAPS_API_KEY,
@@ -115,7 +116,7 @@ export class CompassPage extends React.Component<CompassPageProps, {}> {
       <PageHeader nav={this.props.nav} title='Direction'
         next={this.confirmAutomaticDirection.bind(this)} />
       <PageContent>
-        <section className="centered">
+        <section className="instruction">
           <p>Hold your phone so that it points <em>away</em> from your house, toward the outdoors.</p>
           <p className="detail">Or <a href="#" onClick={() => this.showManualPopup = true }>manually enter your direction</a>.</p>
         </section>
@@ -132,9 +133,9 @@ export class CompassPage extends React.Component<CompassPageProps, {}> {
             style={{transform: `rotate(${this.currentHeading}deg)`}}
             src={require<string>('../assets/compass-pointer.svg')} />
         </div>
-        <section>
+        {/*<section>
           <a className="button" onClick={(e) => this.confirmAutomaticDirection()}>Confirm Direction</a>
-        </section>
+        </section>*/}
       </PageContent>
     </Page>;
   }

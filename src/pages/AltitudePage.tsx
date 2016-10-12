@@ -1,5 +1,6 @@
 import React from 'react';
-import { Page, PageHeader, PageContent, TutorialImage, NavigationState } from '../ui';
+import { Page, PageHeader, PageContent, TutorialImage } from '../ui';
+import { NavigationState } from '../state';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 
@@ -10,7 +11,7 @@ interface AltitudePageProps {
 }
 
 @observer
-export class AltitudePage extends React.Component<AltitudePageProps, {}> {
+export default class AltitudePage extends React.Component<AltitudePageProps, {}> {
   @observable floor?: number;
   input: HTMLInputElement;
 
@@ -19,9 +20,11 @@ export class AltitudePage extends React.Component<AltitudePageProps, {}> {
   }
 
   componentDidMount() {
+    // A timeout here because we need the incoming page transition to complete.
+    // Otherwise, calling .focus() interrupts the transition.
     setTimeout(() => {
       this.input.focus();
-    }, 1000); // XXX: we really just want this to happen after the transition
+    }, 1000);
   }
 
   isValid() {
@@ -36,7 +39,7 @@ export class AltitudePage extends React.Component<AltitudePageProps, {}> {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    if (event.keyCode === 13) {
+    if (this.isValid() && (event.keyCode === 13 || event.keyCode === 9)) {
       this.submit();
     }
   }
@@ -47,8 +50,8 @@ export class AltitudePage extends React.Component<AltitudePageProps, {}> {
       <PageHeader nav={this.props.nav} title='Altitude'
         next={this.isValid() && this.submit.bind(this)} />
       <PageContent>
-        <section className="centered">
-          <p className="detail">Knowing your altitude improves the accuracy of your sensor.</p>
+        <section className="instruction">
+          <p>Knowing your altitude improves the accuracy of your sensor.</p>
         </section>
         <section style={{flexGrow: 1}}>
           <p>Which floor is your sensor on?</p>
@@ -67,9 +70,10 @@ export class AltitudePage extends React.Component<AltitudePageProps, {}> {
           }}/>
         </section>
         {/*<TutorialImage src={require<string>('../assets/building.svg')} />*/}
-        <section>
+        {/*<section>
           <a className="button" disabled={!this.isValid()} onClick={(e) => this.submit()}>Confirm Floor</a>
-        </section>
+
+      </section>*/}
       </PageContent>
     </Page>;
   }

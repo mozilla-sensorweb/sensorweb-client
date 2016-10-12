@@ -1,5 +1,6 @@
 import React from 'react';
-import { Page, PageHeader, PageContent, NavigationState, TutorialImage } from '../ui';
+import { Page, PageHeader, PageContent, TutorialImage } from '../ui';
+import { NavigationState } from '../state';
 import { observer } from 'mobx-react';
 import { when } from 'mobx';
 import { BluetoothManager, BTState } from '../bluetooth';
@@ -13,7 +14,7 @@ interface FindingSensorPageProps {
 }
 
 @observer
-export class FindingSensorPage extends React.Component<FindingSensorPageProps, {}> {
+export default class FindingSensorPage extends React.Component<FindingSensorPageProps, {}> {
   dispose: any;
 
   componentWillMount() {
@@ -32,8 +33,8 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
       ssid: state.ssid,
       password: state.password,
       floor: state.floor,
-      lat: state.location.lat(),
-      lng: state.location.lng(),
+      lat: state.location && state.location.lat(),
+      lng: state.location && state.location.lng(),
       direction: state.direction
     };
     console.log('WOULD SEND', payload);
@@ -52,10 +53,10 @@ export class FindingSensorPage extends React.Component<FindingSensorPageProps, {
       <PageHeader nav={this.props.nav} title='Finding Sensor' />
       <PageContent>
         {/*<TutorialImage src={require<string>('../assets/finding-sensor.svg')} />*/}
-        <section>
+        <section className="instruction">
           <p>SSID: {state.ssid} {state.password}<br/>
             Floor: {state.floor}<br/>
-            Location: {state.location.lat()}, {state.location.lng()}<br/>
+
             Direction: {state.direction}</p>
         </section>
         <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>

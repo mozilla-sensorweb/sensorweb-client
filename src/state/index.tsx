@@ -1,6 +1,8 @@
 import { observable, autorun } from 'mobx';
-import { Step, NavigationState } from './ui';
-import { BluetoothManager, BTState } from './bluetooth';
+import { NavigationState, Step } from './NavigationState';
+import { BluetoothManager, BTState } from '../bluetooth';
+
+export { NavigationState, Step };
 
 export class DeviceInfo {
   constructor() {
@@ -17,7 +19,7 @@ export class AppState {
   nav: NavigationState;
   bluetoothManager: BluetoothManager;
 
-  @observable location: google.maps.LatLng;
+  @observable location?: google.maps.LatLng;
   @observable direction?: number;
   @observable floor?: number;
   @observable ssid?: string;

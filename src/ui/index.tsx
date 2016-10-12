@@ -2,73 +2,7 @@ import React from 'react';
 import { observable, computed, action } from 'mobx';
 import { observer } from 'mobx-react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-
-export enum Step {
-  Welcome,
-  AllowLocation,
-  SelectLocation,
-  Compass,
-  Altitude,
-  Wifi,
-  EnableBluetooth,
-  FindSensor,
-  length
-};
-
-export class NavigationState {
-  @observable _currentStep: Step = Step.Welcome;
-  wentBackwards: boolean;
-
-  private stepsComplete: {[step: string]: boolean} = {};
-
-  @computed
-  get currentStep() {
-    return this._currentStep;
-  }
-
-  @action
-  markComplete(step?: Step) {
-    step = step || this.currentStep;
-    this.stepsComplete[step] = true;
-    if (step === this.currentStep) {
-      this._currentStep++;
-      this.wentBackwards = false;
-      if (this.stepsComplete[this._currentStep]) {
-        this.markComplete(this._currentStep);
-      }
-    }
-  }
-
-  mark(step: Step, complete: boolean) {
-    if (complete) {
-      this.markComplete(step);
-    } else {
-      this.markIncomplete(step);
-    }
-  }
-
-  @action
-  markIncomplete(step: Step) {
-    this.stepsComplete[step] = false;
-    if (step < this.currentStep) {
-      this._currentStep = step;
-      this.wentBackwards = true;
-    }
-  }
-
-  @action
-  markPreviousStepIncomplete() {
-    console.log('mark prev incomplete + '+ this.currentStep);
-    let step = this.currentStep;
-    if (step > 0) {
-      // XXX: This step always automatically finishes, since bluetooth is enabled at this point.
-      if (step - 1 === Step.EnableBluetooth) {
-        step--;
-      }
-      this.markIncomplete(step - 1);
-    }
-  }
-}
+import { NavigationState, Step } from '../state';
 
 interface PageHeaderProps {
   nav: NavigationState;
@@ -101,12 +35,28 @@ export class PageHeader extends React.Component<PageHeaderProps, {}> {
     const backEnabled = backAvailable;
     const nextEnabled = typeof this.props.next === 'function';
 
-    return <div className={['page-header', this.props.translucent ? 'translucent' : 'opaque'].join(' ')}>
-      <a className={'back-button' + (backAvailable ? '' : ' invisible')}
-        onClick={() => this.onBack()} disabled={!backEnabled}>Back</a>
-      <h1>{this.props.title || ''}</h1>
-      <a className={'next-button' + (nextAvailable ? '' : ' invisible')}
-        onClick={() => this.onNext()} disabled={!nextEnabled}>Next</a>
+    let progressDots: any[] = [];
+    for (let i = 0; i < Step.length; i++) {
+      let complete = nav.currentStep >= i;
+      progressDots.push(<div key={i} className={'progress-dot ' + (complete ? 'complete' : '')} />);
+    }
+
+    return <div className={['PageHeader', this.props.translucent ? 'translucent' : 'opaque'].join(' ')}>
+      {/*<div className='PageSpinner'>
+        <div>
+          <img src={require<string>('../assets/spinner.svg')}/>
+        </div>
+      </div>*/}
+      <div className="header-buttons">
+        <a className={'back-button' + (backAvailable ? '' : ' invisible')}
+          onClick={() => this.onBack()} disabled={!backEnabled}>Back</a>
+        <div className="progress">
+          {progressDots}
+        </div>
+        <a className={'next-button' + (nextAvailable ? '' : ' invisible')}
+          onClick={() => this.onNext()} disabled={!nextEnabled}>Next</a>
+      </div>
+      {this.props.title && <h1>{this.props.title || ''}</h1>}
     </div>;
   }
 }
@@ -116,14 +66,59 @@ interface PageProps {
   modal?: boolean;
   visible?: boolean;
 }
+
+let pagesLoading = new Set();
+let wasLoading = false;
+function updateLoader() {
+  let loader = document.getElementById('PageLoader');
+  if (loader) {
+    let isLoading = pagesLoading.size > 0;
+    if (wasLoading !== isLoading) {
+      console.log(Date.now(), 'updateLoader', wasLoading, isLoading);
+      loader.classList.toggle('loaded', wasLoading && !isLoading)
+      loader.classList.toggle('loading', isLoading);
+      if (wasLoading && !isLoading) {
+        setTimeout(() => {
+          loader && loader.classList.remove('loaded');
+        }, 500);
+      }
+      wasLoading = isLoading;
+    }
+  }
+}
+
 @observer
 export class Page extends React.Component<PageProps, {}> {
+
+  componentDidMount() {
+
+    if (this.props.loading) {
+      pagesLoading.add(this);
+    } else {
+      pagesLoading.delete(this);
+    }
+    updateLoader();
+  }
+  componentDidUpdate() {
+    if (this.props.loading) {
+      pagesLoading.add(this);
+    } else {
+      pagesLoading.delete(this);
+    }
+    updateLoader();
+  }
+
+  componentWillUnmount() {
+    pagesLoading.delete(this);
+    updateLoader();
+  }
+
   render() {
     let classNames = ['Page'];
     this.props.loading && classNames.push('loading');
     this.props.modal && classNames.push('modal-page');
 
-    let page = <div className={classNames.join(' ')}>
+    let page = <div key="page" className={classNames.join(' ')}>
       {this.props.children}
     </div>;
 
@@ -143,12 +138,7 @@ export class Page extends React.Component<PageProps, {}> {
 @observer
 export class PageContent extends React.Component<{}, {}> {
   render() {
-    return <div className="page-content">
-      <div className='PageSpinner'>
-        <div>
-          <img src={require<string>('../assets/spinner.svg')}/>
-        </div>
-      </div>
+    return <div className="PageContent">
       {this.props.children}
     </div>;
   }

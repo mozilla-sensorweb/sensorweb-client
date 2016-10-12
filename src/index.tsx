@@ -2,29 +2,25 @@
 import 'babel-polyfill';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin(); // Needed for onTouchTap http://stackoverflow.com/a/34015469/988941
-import './assets/normalize.css';
-import './assets/fonts/Fira-4.202/fira.css';
-import './ui/ui.css';
+
+import './ui/index.css';
 import 'file?name=[name].[ext]!./index.html';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { observable, autorun, computed, when } from 'mobx';
-import { observer, Provider } from 'mobx-react';
+import { observer } from 'mobx-react';
 
-import { Step, NavigationState } from './ui';
+import { NavigationState, Step } from './state';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
-import { BluetoothManager, BTState } from './bluetooth';
-
-import { WelcomePage } from './pages/welcome';
-import { AllowLocationPage } from './pages/allowLocation';
-import { SelectLocationPage } from './pages/selectLocation';
-import { EnableBluetoothPage } from './pages/enableBluetooth';
-import { FindingSensorPage } from './pages/findingSensor';
-import { CompassPage } from './pages/compass';
-import { AltitudePage } from './pages/altitude';
-import { WifiCredentialsPage } from './pages/wifi';
+import WelcomePage from './pages/WelcomePage';
+import AllowLocationPage from './pages/AllowLocationPage';
+import SelectLocationPage from './pages/SelectLocationPage';
+import EnableBluetoothPage from './pages/EnableBluetoothPage';
+import FindingSensorPage from './pages/FindingSensorPage';
+import CompassPage from './pages/CompassPage';
+import AltitudePage from './pages/AltitudePage';
+import WifiCredentialsPage from './pages/WifiCredentialsPage';
 
 import { AppState } from './state';
 
@@ -35,28 +31,39 @@ interface RootProps {
 @observer
 class Root extends React.Component<RootProps, {}> {
   render() {
-    let appState = this.props.appState;
-    let nav = this.props.appState.nav;
+    let appState: AppState = this.props.appState;
+    let nav: NavigationState = this.props.appState.nav;
 
     let pages = {
+
       [Step.Welcome]:
       <WelcomePage nav={nav} />,
+
       [Step.AllowLocation]:
-      <AllowLocationPage nav={nav} locationState={appState} />,
+      <AllowLocationPage nav={nav} saveLocation={(location) => {
+        appState.location = location;
+      } } />,
+
       [Step.SelectLocation]:
-      <SelectLocationPage nav={nav} locationState={appState} />,
+      <SelectLocationPage nav={nav} location={appState.location} saveLocation={(location) => {
+        appState.location = location;
+      } } />,
+
       [Step.Compass]:
-      <CompassPage nav={nav} location={appState.location} saveCompassDirection={(degrees) => {
+      <CompassPage nav={nav} location={appState.location as google.maps.LatLng} saveCompassDirection={(degrees) => {
         appState.direction = degrees;
       } } />,
+
       [Step.Altitude]:
       <AltitudePage nav={nav} floor={appState.floor} saveAltitude={(floor) => {
         appState.floor = floor;
       } } />,
 
       [Step.Wifi]:
-      <WifiCredentialsPage nav={nav} onConfirm={(network, password) => {
-        console.log('CONFIRM', network, password);
+      <WifiCredentialsPage nav={nav} onConfirm={(ssid, password) => {
+        appState.ssid = ssid;
+        appState.password = password;
+        console.log('CONFIRM', ssid, password);
       } } />,
 
       [Step.EnableBluetooth]:
@@ -68,14 +75,12 @@ class Root extends React.Component<RootProps, {}> {
     };
 
     return (
-      <Provider>
-        <ReactCSSTransitionGroup
-          transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
-          transitionEnterTimeout={1000}
-          transitionLeaveTimeout={1000}>
-          <div key={nav.currentStep}>{pages[nav.currentStep]}</div>
-        </ReactCSSTransitionGroup>
-      </Provider>
+      <ReactCSSTransitionGroup
+        transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
+        transitionEnterTimeout={700}
+        transitionLeaveTimeout={700}>
+        <div key={nav.currentStep}>{pages[nav.currentStep]}</div>
+      </ReactCSSTransitionGroup>
     );
   }
 }
@@ -97,6 +102,7 @@ document.addEventListener('deviceready', () => {
 
   ReactDOM.render(
     <div className="root">
+      <div id="PageLoader" />
       <Root appState={appState} />
     </div>,
     document.getElementById('root')
