@@ -46,7 +46,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
 
   componentDidMount() {
-    this.currentGpsLocation = this.props.location;
+    this.selectedLocation = this.currentGpsLocation = this.props.location;
 
     // XXX: retry google maps, warn on no internet
     if (typeof google === 'undefined') {
@@ -156,7 +156,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
     this.disposers.push(reaction(() => this.selectedLocation, () => {
       if (this.selectedLocation && !this.isDragging) {
-        this.map.setCenter(this.selectedLocation);
+        this.map.panTo(this.selectedLocation);
       }
     }));
 
@@ -196,8 +196,10 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   }
 
   componentDidUpdate() {
-    google.maps.event.trigger(this.map, 'resize');
-    this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
+    if (this.map) {
+      google.maps.event.trigger(this.map, 'resize');
+      this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
+    }
   }
 
   componentWillUnmount() {

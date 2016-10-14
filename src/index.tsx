@@ -23,7 +23,6 @@ import AltitudePage from './pages/AltitudePage';
 import WifiCredentialsPage from './pages/WifiCredentialsPage';
 
 import { AppState } from './state';
-import { Page } from './ui';
 
 interface RootProps {
   appState: AppState;
@@ -88,11 +87,28 @@ class Root extends React.Component<RootProps, {}> {
   }
 }
 
+function combineConsoleArguments(method: string) {
+  let console: any = window.console;
+  let originalMethod = console[method].bind(console);
+  console[method] = (...args: any[]) => {
+    originalMethod(args.map((arg) => arg + '').join(' '));
+  };
+}
+
 document.addEventListener('deviceready', () => {
   // We must not construct AppState until after 'deviceready', because
   // certain Cordova APIs are unavailable until after this event fires.
   let appState = new AppState();
   (window as any).appState = appState;
+
+  // Android doesn't log more than one argument to console.log, despite
+  // the existence of cordova-plugin-console. Shim it ourselves, I guess.
+  if (appState.deviceInfo.platform === 'Android') {
+    combineConsoleArguments('info');
+    combineConsoleArguments('log');
+    combineConsoleArguments('warn');
+    combineConsoleArguments('error');
+  }
 
   document.addEventListener('backbutton', () => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') {
@@ -105,6 +121,12 @@ document.addEventListener('deviceready', () => {
     <Root appState={appState} />,
     document.getElementById('root')
   );
+
+  console.log('Hiding splash screen...');
+  setTimeout(() => {
+    let splashscreen: any = (navigator as any).splashscreen;
+    splashscreen && splashscreen.hide();
+  }, 500);
 });
 
 if (!(window as any).cordova) {

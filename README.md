@@ -4,20 +4,21 @@
 
 ## Setup
 
-Node should be installed
-Install cordova: sudo npm install -g cordova
-Install dependencies: npm install
+Prerequisites:
+
+1. Install node and npm
+2. Install cordova: sudo npm install -g cordova
+3. Install dependencies: npm install
 
 ## Running on iOS
 
-Add the platform: cordova platform add ios
-Run: cordova build ios
-
-Install the app with xCode
+- Requires Xcode
+- `cordova platform add ios` (the first time)
+- `cordova build ios`
+- Install the app with Xcode or try `cordova run ios --device`
 
 ## Running on Android
 
-Add the platform: cordova platform add android
-Run: cordova build android
-Build generated in: ~/platforms/android/build/outputs/apk
-Run: adb install android-debug.apk
+- `cordova platform add android` (the first time)
+- `cordova build android`
+- `cordova run android --device`

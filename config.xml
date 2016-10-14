@@ -33,8 +33,18 @@
     <plugin name="com.pylonproducts.wifiwizard" spec="~0.2.11" />
     <plugin name="cordova-plugin-geolocation" spec="~2.4.0" />
     <plugin name="cordova-plugin-device-orientation" spec="~1.0.4" />
-    <preference name="Orientation" value="portrait" />
-    <preference name="EnableViewportScale" value="true" />
     <plugin name="cordova-plugin-statusbar" spec="~2.2.0" />
     <plugin name="cordova-plugin-inappbrowser" spec="~1.5.0" />
+    <preference name="Orientation" value="portrait" />
+    <preference name="EnableViewportScale" value="true" />
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
+    <preference name="StatusBarStyle" value="default" />
+    <preference name="StatusBarBackgroundColor" value="#f5f5f5" />
+    <preference name="KeyboardDisplayRequiresUserAction" value="false" />
+    <preference name="SuppressesLongPressGesture" value="true" />
+    <preference name="KeyboardShrinksView" value="true" />
+    <preference name="SplashScreenDelay" value="5000" />
+    <plugin name="cordova-plugin-keyboard" spec="~1.1.4" />
+    <plugin name="cordova-plugin-splashscreen" spec="~4.0.0" />
 </widget>

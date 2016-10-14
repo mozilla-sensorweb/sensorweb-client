@@ -69,7 +69,9 @@ export default class CompassPage extends React.Component<CompassPageProps, {}> {
     this.watchId = this.compass.watchHeading((heading: any) => {
       this.currentHeading = heading.magneticHeading;
     }, (err: any) => {
-      console.error('ERROR COMPASS ' + err);
+      console.error('Failed to watch compass:', err);
+      this.compass.clearWatch(this.watchId);
+      this.showManualPopup = true;
     }, {
       frequency: 50
     });

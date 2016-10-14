@@ -120,7 +120,16 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
           this.onNetworkSelected(currentNetwork);
         }
         this.firstScanComplete = true;
+      }, (err) => {
+        this.scanning = false;
+        this.firstScanComplete = true;
+        // This shouldn't happen, except on simulators/web
+        console.error('Unable to get list of WiFi networks!', err);
       });
+    }, (err) => {
+      this.scanning = false;
+      this.firstScanComplete = true;
+      console.error('Unable to get current SSID!', err);
     });
   }
 
@@ -148,14 +157,14 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
     this.choosingNetwork = true;
   }
 
-  isValid() {
-    return this.selectedNetwork && (!this.requiresPassword || this.typedPassword);
+  isValid(): boolean {
+    return !!(this.selectedNetwork && (!this.requiresPassword || this.typedPassword));
   }
 
   renderSelectWifiNetworkModal() {
     return (
       <Page modal visible={this.choosingNetwork}>
-        <PageHeader nav={this.props.nav} title="Select Network" back={() => {
+        <PageHeader modal nav={this.props.nav} title="Select Network" back={() => {
           this.choosingNetwork = false;
         } } />
         <PageContent>

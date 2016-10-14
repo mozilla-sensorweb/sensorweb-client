@@ -10,6 +10,7 @@ interface PageHeaderProps {
   next?: (() => any) | false | null;
   title?: string;
   translucent?: boolean;
+  modal?: boolean;
 }
 
 @observer
@@ -49,7 +50,8 @@ export class PageHeader extends React.Component<PageHeaderProps, {}> {
       </div>*/}
       <div className="header-buttons">
         <a className={'back-button' + (backAvailable ? '' : ' invisible')}
-          onClick={() => this.onBack()} disabled={!backEnabled}>Back</a>
+          onClick={() => this.onBack()} disabled={!backEnabled}>
+          {this.props.modal ? 'Close' : 'Back'}</a>
         <div className="progress">
           {progressDots}
         </div>

@@ -16,10 +16,12 @@ export default class AllowLocationPage extends React.Component<AllowLocationPage
   allowLocation() {
     this.loading = true;
     navigator.geolocation.getCurrentPosition((location) => {
+      console.log(`GEO got ${location.coords.latitude}`);
       // We don't set loading to false here, because we want the button to remain disabled as the view closes.
       this.props.saveLocation(new google.maps.LatLng(location.coords.latitude, location.coords.longitude));
       this.props.nav.markComplete();
     }, (err: any) => {
+      console.log(`GEO FAIL ${err}`);
       // XXX: continue?
       this.props.saveLocation(undefined);
       this.loading = false;
@@ -27,13 +29,13 @@ export default class AllowLocationPage extends React.Component<AllowLocationPage
       console.error(err); // XXX display error
     }, {
       enableHighAccuracy: true,
-      maximumAge: 10000,
+      maximumAge: 60000,
       timeout: 10000
     });
   }
 
   render() {
-    return <Page loading={this.loading}>
+    return <Page>
       <PageHeader nav={this.props.nav} title="Allow Location"
         next={!this.loading && this.allowLocation.bind(this)} />
       <PageContent>
