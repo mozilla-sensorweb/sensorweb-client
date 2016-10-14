@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.mozilla.sensorweb" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>SensorWeb</name>
+    <description>
+        SensorWeb is an open network of air quality sensors.
+    </description>
+    <author email="mozilla-dev-sensorweb@lists.mozilla.org" href="https://github.com/mozilla-sensorweb/">
+        Mozilla
+    </author>
+    <content src="index.html" />
+    <plugin name="cordova-plugin-whitelist" spec="1" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+    <hook src="build.sh" type="before_build" />
+    <hook src="build.sh" type="before_serve" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+    </platform>
+    <engine name="ios" spec="~4.2.1" />
+    <engine name="android" spec="~5.2.2" />
+    <plugin name="cordova-plugin-bluetoothle" spec="~4.3.0" />
+    <plugin name="cordova-plugin-console" spec="~1.0.4" />
+    <plugin name="cordova-plugin-device" spec="~1.1.3" />
+    <plugin name="com.pylonproducts.wifiwizard" spec="~0.2.11" />
+    <plugin name="cordova-plugin-geolocation" spec="~2.4.0" />
+    <plugin name="cordova-plugin-device-orientation" spec="~1.0.4" />
+    <preference name="Orientation" value="portrait" />
+    <preference name="EnableViewportScale" value="true" />
+    <plugin name="cordova-plugin-statusbar" spec="~2.2.0" />
+    <plugin name="cordova-plugin-inappbrowser" spec="~1.5.0" />
+</widget>

@@ -1,0 +1,58 @@
+{
+  "name": "sensorweb-client",
+  "version": "1.0.0",
+  "description": "An open network of air-quality sensors.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "node_modules/.bin/webpack --progress --colors --watch",
+    "build": "node_modules/.bin/webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mozilla-sensorweb/sensorweb-client.git"
+  },
+  "author": "Mozilla",
+  "license": "TBD",
+  "bugs": {
+    "url": "https://github.com/mozilla-sensorweb/sensorweb-client/issues"
+  },
+  "homepage": "https://github.com/mozilla-sensorweb/sensorweb-client#readme",
+  "devDependencies": {
+    "@types/googlemaps": "^3.25.35",
+    "@types/lodash": "^4.14.36",
+    "@types/react": "^0.14.36",
+    "@types/react-addons-css-transition-group": "^0.14.17",
+    "@types/react-dom": "^0.14.17",
+    "@types/react-tap-event-plugin": "0.0.30",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
+    "clean-webpack-plugin": "^0.1.10",
+    "css-loader": "^0.25.0",
+    "extract-text-webpack-plugin": "^1.0.1",
+    "file-loader": "^0.9.0",
+    "lodash": "^4.16.2",
+    "mobx": "^2.6.0",
+    "mobx-react": "^3.5.6",
+    "postcss-cssnext": "^2.8.0",
+    "postcss-import": "^8.1.2",
+    "postcss-loader": "^0.13.0",
+    "postcss-url": "^5.1.2",
+    "react": "^15.3.2",
+    "react-addons-css-transition-group": "^15.3.2",
+    "react-dom": "^15.3.1",
+    "react-tap-event-plugin": "^1.0.0",
+    "source-map-loader": "^0.1.5",
+    "style-loader": "^0.13.1",
+    "ts-loader": "^0.8.2",
+    "tslint": "^3.15.1",
+    "typescript": "^2.1.0-dev.20160922",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.13.2"
+  },
+  "dependencies": {}
+}
