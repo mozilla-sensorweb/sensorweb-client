@@ -84,7 +84,6 @@ export class Page extends React.Component<PageProps, {}> {
   }
 
   componentWillReceiveProps(nextProps: PageProps) {
-    console.log('RECV PROPS')
     this.activelyLoading = !!nextProps.loading;
     if (this.props.loading && !this.activelyLoading) {
       this.justFinishedLoading = true;

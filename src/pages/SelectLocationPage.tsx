@@ -57,26 +57,25 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
       }, 0);
     }
 
-    if (this.currentGpsLocation) {
-      // If we're already tracking the current GPS location, move it to match.
-      let watchPositionId = navigator.geolocation.watchPosition((location) => {
-        if (this.isCurrentlyTrackingGps) {
-          this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
-          this.selectedLocation = this.currentGpsLocation;
-        }
-      }, (err: any) => {
-        console.error(err); // XXX display error
-      }, {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 5000
-        });
-      this.disposers.push(() => navigator.geolocation.clearWatch(watchPositionId));
-    } else {
+    // If we're already tracking the current GPS location, move it to match.
+    let watchPositionId = navigator.geolocation.watchPosition((location) => {
+      if (this.isCurrentlyTrackingGps) {
+        this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+        this.selectedLocation = this.currentGpsLocation;
+      }
+    }, (err: any) => {
+      console.error(err); // XXX display error
+      // We'll want them to try to enter their address (wait for the page transition first)
       setTimeout(() => {
         this.addressInput.focus();
       }, 700);
-    }
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000
+      });
+    this.disposers.push(() => navigator.geolocation.clearWatch(watchPositionId));
+
   }
 
   @computed
@@ -87,10 +86,12 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
   @action
   backToGps() {
-    this.locationString = '';
-    this.selectedLocation = this.currentGpsLocation;
-    if (this.selectedLocation) {
-      this.map.panTo(this.selectedLocation);
+    if (this.currentGpsLocation) {
+      this.locationString = '';
+      this.selectedLocation = this.currentGpsLocation;
+      if (this.selectedLocation) {
+        this.map.panTo(this.selectedLocation);
+      }
     }
   }
 
@@ -222,6 +223,9 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   }
 
   findManuallyEnteredAddress() {
+    if (this.waitingForGeocoding) {
+      return;
+    }
     if (!this.typedAddress) {
       this.backToGps();
       return;
@@ -248,6 +252,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
             zoomControl: true
           });
         }
+        console.log('SET LOCATION', results[0].geometry.location);
         this.selectedLocation = results[0].geometry.location;
         this.locationString = results[0].formatted_address;
         this.pin.style.visibility = 'visible';
@@ -260,13 +265,13 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
   render() {
     return <Page loading={false && this.loading}>
-      <PageHeader nav={this.props.nav} title="Select Location"
+      <PageHeader nav={this.props.nav} title="Where is your sensor?"
         next={!this.waitingForGeocoding && !this.inputFocused && !!this.selectedLocation && (() => this.submit())} />
       <PageContent>
         <section className="instruction">
           {this.selectedLocation
-            ? <p>Drag the map to adjust your location.</p>
-            : <p>Type your address.</p>}
+            ? <p>Drag the map to adjust your sensor’s location.</p>
+            : <p>Please type your address. We couldn’t find your location automatically.</p>}
         </section>
         <input type="text"
           ref={(el) => this.addressInput = el}

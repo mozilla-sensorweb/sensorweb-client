@@ -115,7 +115,7 @@ export default class CompassPage extends React.Component<CompassPageProps, {}> {
 
     return <Page>
        {manualPopup}
-      <PageHeader nav={this.props.nav} title='Direction'
+      <PageHeader nav={this.props.nav} title='Which side of the building?'
         next={this.confirmAutomaticDirection.bind(this)} />
       <PageContent>
         <section className="instruction">

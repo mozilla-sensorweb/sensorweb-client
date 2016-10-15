@@ -51,6 +51,8 @@ input {
   display: block;
   box-sizing: border-box;
   width: 100%;
+  -webkit-appearance: none; /* no inset shadow */
+  border-radius: 0px;
 }
 
 

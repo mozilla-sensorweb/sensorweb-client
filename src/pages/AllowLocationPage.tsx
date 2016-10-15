@@ -6,45 +6,34 @@ import { NavigationState } from '../state';
 
 interface AllowLocationPageProps {
   nav: NavigationState;
-  saveLocation(location?: google.maps.LatLng): void;
 }
 
 @observer
 export default class AllowLocationPage extends React.Component<AllowLocationPageProps, {}> {
-  @observable loading = false;
 
-  allowLocation() {
-    this.loading = true;
-    navigator.geolocation.getCurrentPosition((location) => {
-      console.log(`GEO got ${location.coords.latitude}`);
-      // We don't set loading to false here, because we want the button to remain disabled as the view closes.
-      this.props.saveLocation(new google.maps.LatLng(location.coords.latitude, location.coords.longitude));
-      this.props.nav.markComplete();
-    }, (err: any) => {
-      console.log(`GEO FAIL ${err}`);
-      // XXX: continue?
-      this.props.saveLocation(undefined);
-      this.loading = false;
-      this.props.nav.markComplete();
-      console.error(err); // XXX display error
-    }, {
-      enableHighAccuracy: true,
-      maximumAge: 60000,
-      timeout: 10000
-    });
+  submit() {
+    this.props.nav.markComplete();
   }
 
   render() {
     return <Page>
-      <PageHeader nav={this.props.nav} title="Allow Location"
-        next={!this.loading && this.allowLocation.bind(this)} />
+      <PageHeader nav={this.props.nav} title="Getting Started"
+        next={this.submit.bind(this)} />
       <PageContent>
-        <section className="instruction">
-          <p>To map your air quality, please provide access to your location.</p>
+        <section style={{flexGrow: 1}}>
+          <p className="instruction">
+            Your sensor will send air quality data from your location
+              to our cloud service, anonymously and securely.
+          </p>
+          <br/>
+          <div className="detail">
+            <p>To store accurate data, we’ll need to know your location, direction,
+              altitude, and WiFi connection information.</p>
+            <p>Ready? Let’s get started!</p>
+          </div>
         </section>
-        <TutorialImage src={require<string>('../assets/location.svg')} />
         <section>
-          <a className="button" disabled={this.loading} onClick={this.allowLocation.bind(this)}>Allow Location</a>
+          <a className="button" onClick={this.submit.bind(this)}>Allow Location</a>
         </section>
       </PageContent>
     </Page>;

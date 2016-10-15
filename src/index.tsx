@@ -40,9 +40,7 @@ class Root extends React.Component<RootProps, {}> {
       <WelcomePage nav={nav} />,
 
       [Step.AllowLocation]:
-      <AllowLocationPage nav={nav} saveLocation={(location) => {
-        appState.location = location;
-      } } />,
+      <AllowLocationPage nav={nav} />,
 
       [Step.SelectLocation]:
       <SelectLocationPage nav={nav} location={appState.location} saveLocation={(location) => {

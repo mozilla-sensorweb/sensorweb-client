@@ -103,34 +103,43 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
     }
   }
 
-  scan() {
+  async scan() {
     this.scanning = true;
 
-    getCurrentSsid().then((ssid) => {
-      scanForWifiNetworks().then((networks) => {
-        networks = networks.slice();
-        networks.sort((a, b) => a.SSID.localeCompare(b.SSID));
-        this.availableNetworks = networks;
+    let ssid = '';
+    let networks: WifiScanResult[] = [];
+    try {
+      ssid = await getCurrentSsid();
+    } catch (err) {
+      console.warn('Unable to get current WiFi network', err);
+    }
+    try {
+      networks = await scanForWifiNetworks();
+      networks.sort((a, b) => a.SSID.localeCompare(b.SSID));
+    } catch (err) {
+      // Note: This error is expected on iOS.
+      console.warn('Unable to scan for WiFi networks.', err);
+    }
 
-        let currentNetwork = networks.find((network) => network.SSID === ssid);
-        console.log('current network = ' + currentNetwork + ' ssid ' + ssid);
+    this.availableNetworks = networks;
 
-        this.scanning = false;
-        if (!this.firstScanComplete && currentNetwork) {
-          this.onNetworkSelected(currentNetwork);
-        }
-        this.firstScanComplete = true;
-      }, (err) => {
-        this.scanning = false;
-        this.firstScanComplete = true;
-        // This shouldn't happen, except on simulators/web
-        console.error('Unable to get list of WiFi networks!', err);
-      });
-    }, (err) => {
-      this.scanning = false;
-      this.firstScanComplete = true;
-      console.error('Unable to get current SSID!', err);
-    });
+    let currentNetwork = networks.find((network) => network.SSID === ssid);
+    console.log('current network = ' + currentNetwork + ' ssid ' + ssid);
+    if (ssid && !currentNetwork) {
+      currentNetwork = {
+        SSID: ssid,
+        BSSID: '',
+        level: 0,
+        frequency: 0,
+        capabilities: '[UNKNOWN]'
+      };
+    }
+
+    this.scanning = false;
+    if (!this.firstScanComplete && currentNetwork) {
+      this.onNetworkSelected(currentNetwork);
+    }
+    this.firstScanComplete = true;
   }
 
   onKeyDown(event: KeyboardEvent) {

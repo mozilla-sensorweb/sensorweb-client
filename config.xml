@@ -47,4 +47,5 @@
     <preference name="SplashScreenDelay" value="5000" />
     <plugin name="cordova-plugin-keyboard" spec="~1.1.4" />
     <plugin name="cordova-plugin-splashscreen" spec="~4.0.0" />
+    <plugin name="cordova-plugin-background-mode-bluetooth-central" spec="~1.0.0" />
 </widget>
