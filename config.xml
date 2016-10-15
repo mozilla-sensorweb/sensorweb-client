@@ -24,6 +24,7 @@
     <platform name="ios">
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
+        <hook type="after_prepare" src="ios-prepare-hook.sh" />
     </platform>
     <engine name="ios" spec="~4.2.1" />
     <engine name="android" spec="~5.2.2" />

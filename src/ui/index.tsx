@@ -101,7 +101,6 @@ export class Page extends React.Component<PageProps, {}> {
       classNames.push('loaded');
     }
     this.props.modal && classNames.push('modal-page');
-    console.log('PAGE', classNames);
 
     let page = <div key="page" className={classNames.join(' ')}>
       <div className="PageLoader" />

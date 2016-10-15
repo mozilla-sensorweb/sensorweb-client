@@ -45,9 +45,9 @@ export default class CompassPage extends React.Component<CompassPageProps, {}> {
   getStaticMapUrl() {
     let loc = this.props.location;
     let params: any = {
-      center: loc.lat() + ',' + loc.lng(),
+      center: loc.toUrlValue(),
       zoom: 19,
-      size: document.body.clientWidth + 'x' + document.body.clientWidth,
+      size: window.innerWidth + 'x' + window.innerHeight,
       scale: 2, // higher-resolution
       key: STATIC_MAPS_API_KEY,
       //signature: '' // XXX : should get a signature for APIs

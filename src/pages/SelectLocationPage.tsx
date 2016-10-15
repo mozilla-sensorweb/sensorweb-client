@@ -1,8 +1,9 @@
 import React from 'react';
-import { observable, autorunAsync, untracked, runInAction, action, computed, reaction } from 'mobx';
+import { observable, autorunAsync, observe, runInAction, action, computed, reaction } from 'mobx';
 import { observer } from 'mobx-react';
 import { Page, PageHeader, PageContent } from '../ui';
 import { NavigationState } from '../state';
+import { debounce, Cancelable } from 'lodash';
 
 interface SelectLocationPageProps {
   nav: NavigationState;
@@ -15,6 +16,7 @@ let MAPS_API_URL = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&
 
 let script = document.createElement('script');
 script.async = true;
+script.defer = true;
 
 script.src = MAPS_API_URL;
 document.getElementsByTagName('head')[0].appendChild(script);
@@ -23,7 +25,7 @@ document.getElementsByTagName('head')[0].appendChild(script);
   console.log('maps loaded');
 }
 
-type Disposable = (() => void) | google.maps.MapsEventListener;
+type Disposable = (() => void) | google.maps.MapsEventListener | Cancelable;
 
 const DEFAULT_ZOOM = 18;
 
@@ -35,18 +37,20 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   gpsControl: HTMLElement;
   addressInput: HTMLInputElement;
   disposers: Disposable[] = [];
-  isDragging: boolean;
   @observable loading: boolean = true;
-  @observable selectedLocation?: google.maps.LatLng;
+  @observable waitingForFirstGpsResult: boolean = true;
   @observable locationString: string = '';
   @observable typedAddress: string = '';
   @observable inputFocused: boolean = false;
   @observable waitingForGeocoding: boolean = false;
   @observable currentGpsLocation?: google.maps.LatLng;
+  @observable didSelectLocation: boolean = false;
 
 
   componentDidMount() {
-    this.selectedLocation = this.currentGpsLocation = this.props.location;
+    if (this.props.location) {
+      this.selectLocation(this.props.location);
+    }
 
     // XXX: retry google maps, warn on no internet
     if (typeof google === 'undefined') {
@@ -59,49 +63,55 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
     // If we're already tracking the current GPS location, move it to match.
     let watchPositionId = navigator.geolocation.watchPosition((location) => {
-      if (this.isCurrentlyTrackingGps) {
-        this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
-        this.selectedLocation = this.currentGpsLocation;
+      this.waitingForFirstGpsResult = false;
+      this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+      if (this.isCurrentlyTrackingGps || !this.didSelectLocation) {
+        this.selectLocation(this.currentGpsLocation);
       }
     }, (err: any) => {
+      this.waitingForFirstGpsResult = false;
       console.error(err); // XXX display error
-      // We'll want them to try to enter their address (wait for the page transition first)
-      setTimeout(() => {
-        this.addressInput.focus();
-      }, 700);
+      if (err.code !== 3) {
+        // We'll want them to try to enter their address (wait for the page transition first)
+        if (!this.didSelectLocation) {
+          setTimeout(() => {
+            this.addressInput.focus();
+          }, 700);
+        }
+      }
     }, {
         enableHighAccuracy: true,
-        maximumAge: 1000,
+        maximumAge: 60000,
         timeout: 5000
       });
     this.disposers.push(() => navigator.geolocation.clearWatch(watchPositionId));
-
   }
 
-  @computed
   get isCurrentlyTrackingGps() {
-    return this.currentGpsLocation && this.selectedLocation &&
-      this.currentGpsLocation.equals(this.selectedLocation);
+    return this.currentGpsLocation && this.map &&
+      this.currentGpsLocation.equals(this.getWrappedCenter());
   }
 
-  @action
-  backToGps() {
-    if (this.currentGpsLocation) {
-      this.locationString = '';
-      this.selectedLocation = this.currentGpsLocation;
-      if (this.selectedLocation) {
-        this.map.panTo(this.selectedLocation);
-      }
+  selectLocation(location: google.maps.LatLng) {
+    this.didSelectLocation = true;
+    this.locationString = '';
+    if (this.map) {
+      this.map.panTo(location);
+      this.map.setZoom(DEFAULT_ZOOM);
+      this.map.setOptions({ zoomControl: true });
+      this.pin.style.visibility = 'visible';
     }
   }
 
   loadMap() {
     if (!this.mapDiv) { throw new Error('Invariant: this.mapDiv must be set.'); }
 
+    let initialLocation = this.props.location || this.currentGpsLocation;
+
     this.map = new google.maps.Map(this.mapDiv, {
       backgroundColor: 'rgb(163, 204, 255)',
-      center: this.props.location || { lat: 0, lng: 100 },
-      zoom: this.props.location ? DEFAULT_ZOOM : 1,
+      center: initialLocation || { lat: 0, lng: 100 },
+      zoom: initialLocation ? DEFAULT_ZOOM : 1,
       disableDefaultUI: true,
       zoomControl: this.props.location ? true : false,
       clickableIcons: false,
@@ -109,57 +119,40 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
     this.pin = document.createElement('div');
     this.pin.classList.add('gps-pin');
+    this.pin.style.visibility = 'hidden';
     this.mapDiv.appendChild(this.pin);
+
+    if (initialLocation) {
+      // Ensure the pin gets visible etc
+      this.selectLocation(initialLocation);
+    }
 
     this.gpsControl = document.createElement('div');
     let controlText = document.createElement('img');
     this.gpsControl.classList.add('gps-control');
     controlText.src = require<string>('../assets/gps-pointer.svg');
     this.gpsControl.appendChild(controlText);
-    this.gpsControl.onclick = (e) => this.backToGps();
+    this.gpsControl.onclick = (e) => {
+      this.currentGpsLocation && this.selectLocation(this.currentGpsLocation);
+    };
     this.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(this.gpsControl);
-
-    if (!this.currentGpsLocation) {
-      this.gpsControl.style.display = 'none';
-      // don't show the pin until they enter an address and zoom in
-      this.pin.style.visibility = 'hidden';
-    }
 
     google.maps.event.addListenerOnce(this.map, 'tilesloaded', () => {
       this.loading = false;
     });
 
-    this.disposers.push(this.map.addListener('center_changed', () => {
-      // Only update the location if we're interactive.
-      if (this.selectedLocation) {
-        this.selectedLocation = this.map.getCenter();
-      }
-    }));
-
-    this.disposers.push(this.map.addListener('dragstart', () => {
-      this.gpsControl.classList.toggle('following', false);
-      this.isDragging = true;
-    }));
-
-    this.disposers.push(this.map.addListener('dragend', () => {
-      this.isDragging = false;
-      this.selectedLocation = this.map.getCenter();
-    }));
-
     this.disposers.push(this.map.addListener('click', () => {
       this.addressInput.blur();
     }));
 
-    this.disposers.push(autorunAsync(() => {
-      let loc = this.selectedLocation;
-      loc && this.locationChangedWithTimeout(loc);
-    }, 500));
+    let centerChangedHandler = debounce(this.onMapCenterChanged.bind(this), 500);
+    this.disposers.push(centerChangedHandler);
 
-    this.disposers.push(reaction(() => this.selectedLocation, () => {
-      if (this.selectedLocation && !this.isDragging) {
-        this.map.panTo(this.selectedLocation);
-      }
-    }));
+    // set location ---> center_changed --> set location
+    this.disposers.push(this.map.addListener('center_changed', centerChangedHandler));
+    if (initialLocation) {
+      this.onMapCenterChanged(); // Geocode the initial location.
+    }
 
     // When the keyboard pops up, recenter the map on the proper address.
     let resizeHandler = () => {
@@ -171,25 +164,31 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
     });
   }
 
+  getWrappedCenter(): google.maps.LatLng {
+    // getCenter() doesn't wrap by default, meaning it can return values greater than 180.
+    // We can normalize it like so:
+    let center = this.map.getCenter();
+    return new google.maps.LatLng(center.lat(), center.lng());
+  }
+
   /**
    * When the location changes (with a debounced timeout to prevent overloading geocoding limits),
    * run the geocoder to populate the address field.
    */
-  @action
-  locationChangedWithTimeout(location: google.maps.LatLng) {
-    let geo = new google.maps.Geocoder();
-    if (this.inputFocused ||
-      this.isDragging ||
-      // Already have the address for the current location
-      (this.locationString && this.isCurrentlyTrackingGps)) {
+  onMapCenterChanged() {
+    this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
+    this.gpsControl.style.display = (this.currentGpsLocation ? '' : 'none');
+
+    if (this.inputFocused) {
       return;
     }
 
-    console.log('geocoding...');
+    console.log('Geocoding:', this.getWrappedCenter().toString());
+    let geo = new google.maps.Geocoder();
     geo.geocode({
-      location: location
+      location: this.getWrappedCenter()
     }, (results, status) => {
-      console.log('geocode result ' + (results && results[0]) + ' ' + status);
+      console.log('Geocode result:', status, results && results[0]);
       if (results && results[0]) {
         this.locationString = results[0].formatted_address;
       }
@@ -198,36 +197,36 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
   componentDidUpdate() {
     if (this.map) {
+      // If components changed position, the map might have resized (due to flexbox).
+      // We need to tell google, because it doesn't automatically detect that resize.
       google.maps.event.trigger(this.map, 'resize');
-      this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
     }
   }
 
   componentWillUnmount() {
     this.disposers.forEach((disposer) => {
-      if (typeof disposer === 'function') {
+      if ((disposer as Cancelable).cancel) {
+        (disposer as Cancelable).cancel();
+      } else if (typeof disposer === 'function') {
         disposer();
-      } else {
-        disposer.remove();
+      } else if ((disposer as google.maps.MapsEventListener)) {
+        (disposer as google.maps.MapsEventListener).remove();
       }
     });
     (window as any).initMap = () => { };
   }
 
   submit() {
-    if (!this.selectedLocation) {
-      return;
+    if (this.didSelectLocation) {
+      let center = this.getWrappedCenter();
+      console.log('Selected location:', center.toString());
+      this.props.saveLocation(center);
+      this.props.nav.markComplete();
     }
-    this.props.saveLocation(this.selectedLocation);
-    this.props.nav.markComplete();
   }
 
   findManuallyEnteredAddress() {
-    if (this.waitingForGeocoding) {
-      return;
-    }
     if (!this.typedAddress) {
-      this.backToGps();
       return;
     }
     let geo = new google.maps.Geocoder();
@@ -235,6 +234,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
     geo.geocode({
       address: this.typedAddress
     }, (results, status) => {
+      this.waitingForGeocoding = false;
       // XXX if no address, handle error (maybe clear input?)
       if (!results || !results[0]) {
         console.log('unable to geocode: ' + status);
@@ -242,23 +242,9 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
         return;
       }
       runInAction(() => {
-        this.waitingForGeocoding = false;
-        console.log('blur address');
-        this.addressInput.blur();
-        this.inputFocused = false;
-        if (!this.selectedLocation) {
-          this.map.setZoom(DEFAULT_ZOOM);
-          this.map.setOptions({
-            zoomControl: true
-          });
-        }
-        console.log('SET LOCATION', results[0].geometry.location);
-        this.selectedLocation = results[0].geometry.location;
+        this.selectLocation(results[0].geometry.location);
         this.locationString = results[0].formatted_address;
-        this.pin.style.visibility = 'visible';
-        console.log('nulling typed address');
         this.typedAddress = '';
-        console.log("RESULTS " + JSON.stringify(results), results);
       });
     });
   }
@@ -266,18 +252,18 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   render() {
     return <Page loading={false && this.loading}>
       <PageHeader nav={this.props.nav} title="Where is your sensor?"
-        next={!this.waitingForGeocoding && !this.inputFocused && !!this.selectedLocation && (() => this.submit())} />
+        next={!this.waitingForGeocoding && !this.inputFocused && this.didSelectLocation && (() => this.submit())} />
       <PageContent>
         <section className="instruction">
-          {this.selectedLocation
-            ? <p>Drag the map to adjust your sensor’s location.</p>
+          {this.didSelectLocation || this.waitingForFirstGpsResult
+            ? <p>Drag the map to adjust.</p>
             : <p>Please type your address. We couldn’t find your location automatically.</p>}
         </section>
         <input type="text"
           ref={(el) => this.addressInput = el}
           disabled={this.waitingForGeocoding}
           onChange={(e) => this.typedAddress = e.currentTarget.value}
-          onKeyDown={(e) => { if (e.keyCode === 13) this.findManuallyEnteredAddress(); } }
+          onKeyDown={(e) => { if (e.keyCode === 13) e.currentTarget.blur(); } }
           onFocus={(e) => this.inputFocused = true}
           onBlur={(e) => { this.inputFocused = false; this.findManuallyEnteredAddress(); } }
           onClick={(e) => e.currentTarget.select()}
@@ -286,18 +272,11 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
             textAlign: 'center',
             borderLeftWidth: 0,
             borderRightWidth: 0,
-          }} value={this.typedAddress} placeholder={this.locationString} />
+          }} value={this.typedAddress || (!this.inputFocused && this.locationString) || ''} />
         <div className="map-div" ref={(e) => this.mapDiv = e} style={{
           flexGrow: 1,
-          pointerEvents: this.selectedLocation ? 'auto' : 'none'
+          pointerEvents: this.didSelectLocation ? 'auto' : 'none'
         }}>Map</div>
-        {/*<section>
-          NOTE: We use onMouseDown for the first button because it arrives before onBlur, which causes the button to swap to
-          the confirmLocation button before we have a chance to handle the event.
-          {this.inputFocused
-            ? <a className="button" disabled={this.waitingForGeocoding} onMouseDown={(e) => this.findManuallyEnteredAddress()}>Find Address</a>
-            : <a className="button" disabled={this.waitingForGeocoding} onClick={(e) => this.confirmLocation()}>Confirm Location</a>}
-        </section>*/}
       </PageContent>
     </Page>;
   }

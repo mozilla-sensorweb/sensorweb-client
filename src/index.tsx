@@ -44,6 +44,7 @@ class Root extends React.Component<RootProps, {}> {
 
       [Step.SelectLocation]:
       <SelectLocationPage nav={nav} location={appState.location} saveLocation={(location) => {
+        console.log('SAVED LOC', location.lat(), location.lng());
         appState.location = location;
       } } />,
 
