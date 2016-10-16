@@ -1,11 +1,7 @@
 - CSS Spinner (spinner.svg) via http://loading.io/
 
 - Icons via The Noun Projeet, paid non-attribution license:
-  - bluetooth.svg
-  - finding-sensor.svg
   - gps-pointer.svg
-  - location.svg
-  - building.svg
   - lock.svg
 
 - Fira (font), Apache 2.0 license: https://github.com/mozilla/Fira

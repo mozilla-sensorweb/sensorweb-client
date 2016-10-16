@@ -51,10 +51,10 @@ export default class AltitudePage extends React.Component<AltitudePageProps, {}>
         next={this.isValid() && this.submit.bind(this)} />
       <PageContent>
         <section className="instruction">
-          <p>Knowing your altitude allows your sensor to provide more accurate data.</p>
+          <p>Knowing your sensor’s altitude improves its accuracy.</p>
         </section>
         <section style={{flexGrow: 1}}>
-          <p>What floor of your building is your sensor on?</p>
+          <p>On which floor of the building is your sensor located?</p>
           <input type="number"
             ref={(el) => this.input = el}
             value={this.floor || ''}

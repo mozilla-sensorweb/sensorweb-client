@@ -76,7 +76,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
         if (!this.didSelectLocation) {
           setTimeout(() => {
             this.addressInput.focus();
-          }, 700);
+          }, 500);
         }
       }
     }, {

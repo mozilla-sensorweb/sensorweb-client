@@ -128,7 +128,8 @@ export default class CompassPage extends React.Component<CompassPageProps, {}> {
           justifyContent: 'center',
           alignItems: 'center',
           flex: '1 1 0px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          borderTop: '1px solid #999'
          }}>
           <img style={{width: '100%', height: 'auto', display: 'block'}} src={this.mapUrl} />
           <img className='compass-pointer'

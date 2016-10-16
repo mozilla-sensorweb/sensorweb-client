@@ -77,8 +77,8 @@ class Root extends React.Component<RootProps, {}> {
       <div className="root">
         <ReactCSSTransitionGroup
           transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
-          transitionEnterTimeout={700}
-          transitionLeaveTimeout={700}>
+          transitionEnterTimeout={500}
+          transitionLeaveTimeout={500}>
           <div key={nav.currentStep}>{pages[nav.currentStep]}</div>
         </ReactCSSTransitionGroup>
       </div>
