@@ -13,10 +13,9 @@ export default function EnableBluetoothPage(props: EnableBluetoothPageProps) {
       <PageHeader nav={props.nav} title='Enable Bluetooth'
         next={() => props.bluetoothManager.enable()} />
       <PageContent>
-        <section className="instruction">
+        <section className="instruction" style={{flexGrow: 1}}>
           <p>Please enable bluetooth to continue.</p>
         </section>
-        <TutorialImage src={require<string>('../assets/bluetooth.svg')} />
         <section>
           <a className="button" onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
         </section>

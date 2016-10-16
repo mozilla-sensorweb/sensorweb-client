@@ -150,9 +150,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
     // set location ---> center_changed --> set location
     this.disposers.push(this.map.addListener('center_changed', centerChangedHandler));
-    if (initialLocation) {
-      this.onMapCenterChanged(); // Geocode the initial location.
-    }
+    this.onMapCenterChanged();
 
     // When the keyboard pops up, recenter the map on the proper address.
     let resizeHandler = () => {
@@ -179,7 +177,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
     this.gpsControl.classList.toggle('following', this.isCurrentlyTrackingGps);
     this.gpsControl.style.display = (this.currentGpsLocation ? '' : 'none');
 
-    if (this.inputFocused) {
+    if (this.inputFocused || !this.didSelectLocation) {
       return;
     }
 

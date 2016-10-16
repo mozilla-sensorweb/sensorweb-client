@@ -24,7 +24,7 @@ export default class AltitudePage extends React.Component<AltitudePageProps, {}>
     // Otherwise, calling .focus() interrupts the transition.
     setTimeout(() => {
       this.input.focus();
-    }, 1000);
+    }, 500);
   }
 
   isValid() {
