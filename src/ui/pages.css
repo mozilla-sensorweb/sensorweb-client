@@ -40,9 +40,9 @@
       height: 5px;
       margin: 2px;
       border-radius: 50%;
-      border: 1px solid #bbb;
+      border: 1px solid #ccc;
       &.complete {
-        background: #bbb;
+        background: #ccc;
       }
     }
   }

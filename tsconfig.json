@@ -13,6 +13,9 @@
     "jsx": "preserve",
     "types": [
       "googlemaps"
+    ],
+    "lib": [
+      "dom", "es6", "dom.iterable", "scripthost"
     ]
  },
   "include": [
