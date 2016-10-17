@@ -20,11 +20,13 @@
     <hook src="build.sh" type="before_serve" />
     <platform name="android">
         <allow-intent href="market:*" />
+        <preference name="StatusBarBackgroundColor" value="#000000" />
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
         <hook src="ios-prepare-hook.sh" type="after_prepare" />
+        <preference name="StatusBarBackgroundColor" value="#f5f5f5" />
     </platform>
     <engine name="ios" spec="~4.2.1" />
     <engine name="android" spec="~5.2.2" />
@@ -40,7 +42,6 @@
     <preference name="DisallowOverscroll" value="true" />
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="StatusBarStyle" value="default" />
-    <preference name="StatusBarBackgroundColor" value="#f5f5f5" />
     <preference name="KeyboardDisplayRequiresUserAction" value="false" />
     <preference name="SuppressesLongPressGesture" value="true" />
     <preference name="KeyboardShrinksView" value="true" />
