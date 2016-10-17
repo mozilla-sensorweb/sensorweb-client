@@ -23,3 +23,10 @@ Prerequisites:
 - `cordova platform add android` (the first time)
 - `cordova build android`
 - `cordova run android --device`
+
+## Polish
+
+To generate the icons and splash screen:
+
+- `brew install imagemagick` (Mac)
+- `./generate-icons.sh`

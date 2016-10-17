@@ -62,7 +62,6 @@
     text-align: center;
     padding: 1em 0;
     font-size: smaller;
-    font-weight: 300;
     color: #06c;
     &:active {
       color: #0af;
