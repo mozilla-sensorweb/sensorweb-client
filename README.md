@@ -9,6 +9,7 @@ Prerequisites:
 1. Install node and npm
 2. Install cordova: sudo npm install -g cordova
 3. Install dependencies: npm install
+4. Run `npm run build`
 
 ## Running on iOS
 
