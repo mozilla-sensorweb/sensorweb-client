@@ -56,6 +56,7 @@ export default class AltitudePage extends React.Component<AltitudePageProps, {}>
         <section style={{flexGrow: 1}}>
           <p>On which floor of the building is your sensor located?</p>
           <input type="number"
+            pattern="\d*"
             ref={(el) => this.input = el}
             value={this.floor || ''}
             style={{fontSize: 'larger'}}
