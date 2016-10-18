@@ -50,4 +50,5 @@
     <plugin name="cordova-plugin-background-mode-bluetooth-central" spec="~1.0.0" />
     <plugin name="wifiwizard" value="com.pylonproducts.wifiwizard.WifiWizard" />
     <plugin name="ionic-plugin-keyboard" spec="~2.2.1" />
+    <preference name="KeyboardDisplayRequiresUserAction" value="false" />
 </widget>
