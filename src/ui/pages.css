@@ -16,8 +16,20 @@
 }
 
 
+.content-is-scrollable .PageHeader {
+  z-index: 10;
+  background: #f5f5f5;
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.05);
+}
+.content-is-scrollable .PageHeader h1 {
+  display: none;
+}
+
 .PageHeader {
   flex-shrink: 0;
+  /* There's a rendering glitch when switching .content-is-scrollable unless
+     we layerize the header with this transform. (The <h1> flickers.) */
+  transform: translateZ(0);
 
   & .header-buttons {
     display: flex;

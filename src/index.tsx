@@ -130,12 +130,52 @@ document.addEventListener('deviceready', () => {
     splashscreen && splashscreen.hide();
   }, 500);
 
-  (window as any).cordova.plugins.Keyboard.disableScroll(true);
+  handleSoftwareKeyboardWindowResizing();
 
   // the ontouchstart allows Safari to show :active states:
   // http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari
   document.body.ontouchstart = () => {};
 });
+
+/**
+ * When the software keyboard pops up, we want the app to behave as close to
+ * a native app as possible. With cordova, there are a couple options --
+ * we can use the OS-default behavior, which makes the entire webview scrollable
+ * and moves the text input onscreen (causing the page header to disappear from the
+ * top of the page), or we can call Keyboard.disableScroll(true) and perform our
+ * own manual actions. We do the latter.
+ */
+function handleSoftwareKeyboardWindowResizing() {
+  // Don't resize the webview when the keyboard comes up.
+  (window as any).cordova.plugins.Keyboard.disableScroll(true);
+  // When the keyboard shows, figure out if PageContent needs to be scrollable.
+  // If there's not much content, the view might not need to change anything.
+  // If there is, make PageContent scrollable, and scroll the input into view ourselves.
+  window.addEventListener('native.keyboardshow', (e: any) => {
+    let content = document.body.querySelector('.PageContent') as HTMLElement;
+    if (content) {
+      content.style.overflowY = 'auto';
+      // On iOS, we need to add a margin to the content, because by default the content
+      // extends below the keyboard. Android doesn't seem to need this.
+      if ((window as any).cordova.platformId === 'ios') {
+        content.style.marginBottom = e.keyboardHeight + 'px';
+      }
+      if (content.scrollHeight > content.clientHeight) {
+        document.body.classList.add('content-is-scrollable');
+      }
+      document.activeElement.scrollIntoView();
+    }
+  });
+  // Reset everything when the keyboard goes away.
+  window.addEventListener('native.keyboardhide', () => {
+    document.body.classList.remove('content-is-scrollable');
+    let content = document.body.querySelector('.PageContent') as HTMLElement;
+    if (content) {
+      content.style.overflowY = 'auto';
+      content.style.marginBottom = '0';
+    }
+  });
+}
 
 if (!(window as any).cordova) {
   document.dispatchEvent(new CustomEvent('deviceready'));
