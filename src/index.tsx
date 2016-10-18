@@ -1,7 +1,5 @@
 // These imports inject dependencies like CSS and index.html
 import 'babel-polyfill';
-import injectTapEventPlugin from 'react-tap-event-plugin';
-injectTapEventPlugin(); // Needed for onTouchTap http://stackoverflow.com/a/34015469/988941
 
 import './ui/index.css';
 import 'file?name=[name].[ext]!./index.html';
@@ -21,6 +19,8 @@ import FindingSensorPage from './pages/FindingSensorPage';
 import CompassPage from './pages/CompassPage';
 import AltitudePage from './pages/AltitudePage';
 import WifiCredentialsPage from './pages/WifiCredentialsPage';
+
+let FastClick = require<any>('fastclick');
 
 import { AppState } from './state';
 
@@ -121,11 +121,20 @@ document.addEventListener('deviceready', () => {
     document.getElementById('root')
   );
 
+  FastClick.attach(document.body);
+  console.log('Attached FastClick');
+
   console.log('Hiding splash screen...');
   setTimeout(() => {
     let splashscreen: any = (navigator as any).splashscreen;
     splashscreen && splashscreen.hide();
   }, 500);
+
+  (window as any).cordova.plugins.Keyboard.disableScroll(true);
+
+  // the ontouchstart allows Safari to show :active states:
+  // http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari
+  document.body.ontouchstart = () => {};
 });
 
 if (!(window as any).cordova) {

@@ -47,7 +47,9 @@ export default class CompassPage extends React.Component<CompassPageProps, {}> {
     let params: any = {
       center: loc.toUrlValue(),
       zoom: 19,
-      size: window.innerWidth + 'x' + window.innerHeight,
+      // window's innerHeight might be race-condition-y if the keyboard was
+      // previously displayed, so give it some extra height here:
+      size: window.innerWidth + 'x' + (window.innerWidth * 2),
       scale: 2, // higher-resolution
       key: STATIC_MAPS_API_KEY,
       //signature: '' // XXX : should get a signature for APIs
