@@ -148,24 +148,26 @@ document.addEventListener('deviceready', () => {
  * own manual actions. We do the latter.
  */
 function handleSoftwareKeyboardWindowResizing() {
-  // Don't resize the webview when the keyboard comes up.
-  (window as any).cordova.plugins.Keyboard.disableScroll(true);
+  let platformId: string = (window as any).cordova.platformId;
+  // Don't resize the webview when the keyboard comes up. This is only available on iOS.
+  if (platformId === 'ios') {
+    (window as any).cordova.plugins.Keyboard.disableScroll(true);
+  }
   // When the keyboard shows, figure out if PageContent needs to be scrollable.
   // If there's not much content, the view might not need to change anything.
   // If there is, make PageContent scrollable, and scroll the input into view ourselves.
   window.addEventListener('native.keyboardshow', (e: any) => {
     let content = document.body.querySelector('.PageContent') as HTMLElement;
     if (content) {
-      content.style.overflowY = 'auto';
       // On iOS, we need to add a margin to the content, because by default the content
-      // extends below the keyboard. Android doesn't seem to need this.
-      if ((window as any).cordova.platformId === 'ios') {
+      // extends below the keyboard. Android automatically shrinks the viewport.
+      if (platformId === 'ios') {
         content.style.marginBottom = e.keyboardHeight + 'px';
       }
       if (content.scrollHeight > content.clientHeight) {
         document.body.classList.add('content-is-scrollable');
+        document.activeElement.scrollIntoView(false /* align to bottom */);
       }
-      document.activeElement.scrollIntoView();
     }
   });
   // Reset everything when the keyboard goes away.
@@ -173,8 +175,9 @@ function handleSoftwareKeyboardWindowResizing() {
     document.body.classList.remove('content-is-scrollable');
     let content = document.body.querySelector('.PageContent') as HTMLElement;
     if (content) {
-      content.style.overflowY = 'auto';
-      content.style.marginBottom = '0';
+      if (platformId === 'ios') {
+        content.style.marginBottom = '0';
+      }
     }
   });
 }
