@@ -35,7 +35,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
       floor: state.floor,
       lat: state.location && state.location.lat(),
       lng: state.location && state.location.lng(),
-      direction: state.direction
+      direction: state.heading
     };
     console.log('WOULD SEND', payload);
     this.props.nav.markComplete();
@@ -57,7 +57,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
           <p>SSID: {state.ssid} {state.password}<br/>
             Floor: {state.floor}<br/>
 
-            Direction: {state.direction}</p>
+            Direction: {state.heading}</p>
         </section>
         <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>
         <div>

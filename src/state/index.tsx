@@ -20,7 +20,7 @@ export class AppState {
   bluetoothManager: BluetoothManager;
 
   @observable location?: google.maps.LatLng;
-  @observable direction?: number;
+  @observable heading?: number;
   @observable floor?: number;
   @observable ssid?: string;
   @observable password?: string;

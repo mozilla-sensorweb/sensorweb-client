@@ -65,11 +65,12 @@ ul.list {
   & li {
     border-bottom: 1px solid #eee;
     padding: 0.5em 1em;
-    &.list-item-header {
-      font-weight: bold;
-      pointer-events: none;
-      text-align: center;
+
+    &.checked {
+      color: var(--selection-foreground);
+      background-color: var(--selection-background);
     }
+
     &:active {
       color: var(--selection-foreground);
       background-color: var(--selection-background);
@@ -95,10 +96,6 @@ ul.list {
 }
 
 .manual-direction-entry {
-  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
-  & ul {
-    margin: 0;
-  }
 }
 
 .wifi-password-lock-icon {

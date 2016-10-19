@@ -49,8 +49,10 @@ class Root extends React.Component<RootProps, {}> {
       } } />,
 
       [Step.Compass]:
-      <CompassPage nav={nav} location={appState.location as google.maps.LatLng} saveCompassDirection={(degrees) => {
-        appState.direction = degrees;
+      <CompassPage nav={nav}
+        heading={appState.heading}
+        location={appState.location as google.maps.LatLng} saveCompassDirection={(degrees) => {
+        appState.heading = degrees;
       } } />,
 
       [Step.Altitude]:
