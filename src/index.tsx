@@ -139,6 +139,20 @@ document.addEventListener('deviceready', () => {
   document.body.ontouchstart = () => {};
 });
 
+
+/**
+ * Find the <PageContent/> ancestor of document.activeElement.
+ */
+function findActivePageContent(): HTMLElement | undefined {
+  let el = document.activeElement;
+  while (el) {
+    if (el.classList.contains('PageContent')) {
+      return el as HTMLElement;
+    }
+    el = el.parentElement;
+  }
+}
+
 /**
  * When the software keyboard pops up, we want the app to behave as close to
  * a native app as possible. With cordova, there are a couple options --
@@ -153,31 +167,40 @@ function handleSoftwareKeyboardWindowResizing() {
   if (platformId === 'ios') {
     (window as any).cordova.plugins.Keyboard.disableScroll(true);
   }
+
+  let activePageContent: HTMLElement|undefined;
+
   // When the keyboard shows, figure out if PageContent needs to be scrollable.
   // If there's not much content, the view might not need to change anything.
   // If there is, make PageContent scrollable, and scroll the input into view ourselves.
   window.addEventListener('native.keyboardshow', (e: any) => {
-    let content = document.body.querySelector('.PageContent') as HTMLElement;
-    if (content) {
-      // On iOS, we need to add a margin to the content, because by default the content
-      // extends below the keyboard. Android automatically shrinks the viewport.
-      if (platformId === 'ios') {
-        content.style.marginBottom = e.keyboardHeight + 'px';
-      }
-      if (content.scrollHeight > content.clientHeight) {
-        document.body.classList.add('content-is-scrollable');
-        document.activeElement.scrollIntoView(false /* align to bottom */);
-      }
+    console.log('native.keyboardshow');
+    activePageContent = findActivePageContent();
+    if (!activePageContent) {
+      return;
+    }
+    // On iOS, we need to add a margin to the content, because by default the content
+    // extends below the keyboard. Android automatically shrinks the viewport.
+    if (platformId === 'ios') {
+      activePageContent.style.marginBottom = e.keyboardHeight + 'px';
+    }
+    console.log('scrollHeight', activePageContent,
+      activePageContent.scrollHeight, activePageContent.clientHeight);
+
+    if (activePageContent.scrollHeight > activePageContent.clientHeight) {
+      document.body.classList.add('content-is-scrollable');
+      document.activeElement.scrollIntoView(false /* align to bottom */);
     }
   });
   // Reset everything when the keyboard goes away.
   window.addEventListener('native.keyboardhide', () => {
+    console.log('native.keyboardhide');
     document.body.classList.remove('content-is-scrollable');
-    let content = document.body.querySelector('.PageContent') as HTMLElement;
-    if (content) {
+    if (activePageContent) {
       if (platformId === 'ios') {
-        content.style.marginBottom = '0';
+        activePageContent.style.marginBottom = '0';
       }
+      activePageContent = undefined;
     }
   });
 }
