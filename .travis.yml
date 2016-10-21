@@ -25,3 +25,4 @@ install:
     - source ./scripts/bootstrap.sh
 script:
     - source ./scripts/build.sh
+    
