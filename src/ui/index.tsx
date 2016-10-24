@@ -11,6 +11,7 @@ interface PageHeaderProps {
   title?: string;
   translucent?: boolean;
   modal?: boolean;
+  noProgress?: boolean;
 }
 
 @observer
@@ -37,7 +38,7 @@ export class PageHeader extends React.Component<PageHeaderProps, {}> {
     const nextEnabled = typeof this.props.next === 'function';
 
     let progressDots: any[] = [];
-    for (let i = 0; i < Step.Dashboard; i++) {
+    for (let i = Step.BeginSetup; i < Step.Dashboard; i++) {
       let complete = nav.currentStep >= i;
       progressDots.push(<div key={i} className={'progress-dot ' + (complete ? 'complete' : '')} />);
     }
@@ -52,9 +53,9 @@ export class PageHeader extends React.Component<PageHeaderProps, {}> {
         <a className={'back-button' + (backAvailable ? '' : ' invisible')}
           onClick={() => this.onBack()} disabled={!backEnabled}>
           {this.props.modal ? 'Close' : 'Back'}</a>
-        <div className="progress">
+        {!this.props.noProgress && <div className="progress">
           {progressDots}
-        </div>
+        </div>}
         <a className={'next-button' + (nextAvailable ? '' : ' invisible')}
           onClick={() => this.onNext()} disabled={!nextEnabled}>Next</a>
       </div>
