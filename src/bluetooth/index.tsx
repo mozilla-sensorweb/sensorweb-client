@@ -11,10 +11,12 @@ export enum BTState {
   StartingScan,
   Scanning,
   StoppingScan,
+  DoneScanning,
   Connecting,
   Connected,
   Discovering,
-  Discovered
+  Discovered,
+  Closing
 }
 
 if (!(window as any).cordova) {
@@ -58,7 +60,7 @@ export class BluetoothManager {
     });
   }
 
-  onBluetoothStateChanged(state: StringStatus) {
+  private onBluetoothStateChanged(state: StringStatus) {
     let oldState = this.state;
 
     if (state.status === 'enabled' && this.state !== BTState.Idle) {
@@ -70,9 +72,7 @@ export class BluetoothManager {
   }
 
   connectToNearestSensor() {
-    const SERVICE_UUID = 'ec00';
-    const CHARACTERISTIC_UUID = 'fff1';
-
+    const SERVICE_UUID = '0123';
     return this.scanForDeviceWithService(SERVICE_UUID).then((info) => {
       return this.connect(info);
     }).then((scanResult) => {
@@ -92,17 +92,17 @@ export class BluetoothManager {
     this.state = BTState.StoppingScan;
     return new Promise((resolve) => {
       this.bluetoothle.stopScan(() => {
-        this.state = BTState.Idle;
+        this.state = BTState.DoneScanning;
         resolve();
       }, (err: any) => {
-        console.warn(`Failed to stop scan: ${err} (assuming idle state)`);
-        this.state = BTState.Idle;
+        console.warn(`Failed to stop scan: ${err} (assuming DoneScanning state)`);
+        this.state = BTState.DoneScanning;
         resolve();
       });
     });
   }
 
-  scanForDeviceWithService(requiredServiceUuid: string): Promise<ScanResult> {
+  private scanForDeviceWithService(requiredServiceUuid: string): Promise<ScanResult> {
     if (this.state !== BTState.Idle) {
       throw new Error(`Unable to scan() while in ${BTState[this.state]} state.`);
     }
@@ -140,7 +140,7 @@ export class BluetoothManager {
     });
   }
 
-  connect(scanResult: ScanResult): Promise<ScanResult> {
+  private connect(scanResult: ScanResult): Promise<ScanResult> {
     return new Promise((resolve, reject) => {
       this.state = BTState.Connecting;
       this.bluetoothle.connect((result: any) => {
@@ -150,8 +150,14 @@ export class BluetoothManager {
           resolve(scanResult);
         } else {
           console.warn('Disconnected unexpectedly from device.');
-          this.state = BTState.Idle;
+          this.state = BTState.Closing;
           this.connectedDeviceInfo = null;
+          this.bluetoothle.close(() => {
+            this.state = BTState.Idle;
+          }, (err: any) => {
+            console.warn('Ignored close() error:', err);
+            this.state = BTState.Idle;
+          }, { address: scanResult.address });
         }
       }, (err: any) => {
         console.warn('Failed to connect to device.');
@@ -163,7 +169,7 @@ export class BluetoothManager {
     });
   }
 
-  discover(scanResult: ScanResult): Promise<DiscoverResult> {
+  private discover(scanResult: ScanResult): Promise<DiscoverResult> {
     return new Promise((resolve, reject) => {
       this.state = BTState.Discovering;
       this.bluetoothle.discover((result: DiscoverResult) => {
@@ -180,18 +186,22 @@ export class BluetoothManager {
     });
   }
 
-  write(discoverResult: DiscoverResult, serviceUuid: string, characteristicUuid: string, value: Uint8Array): Promise<{}> {
+  write(serviceUuid: string, characteristicUuid: string, value: Uint8Array): Promise<{}> {
     if (value.length === 0) {
       return Promise.resolve({});
     }
     return new Promise((resolve, reject) => {
+      if (!this.connectedDeviceInfo) {
+        reject('not connected');
+        return;
+      }
       console.log(`WRITE: ${characteristicUuid} ${value}`);
       this.bluetoothle.write((result: any) => {
         resolve();
       }, (err: any) => {
         reject(err);
       }, {
-        address: discoverResult.address,
+        address: this.connectedDeviceInfo.address,
         service: serviceUuid,
         characteristic: characteristicUuid,
         type: '',

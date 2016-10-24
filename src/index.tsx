@@ -12,6 +12,7 @@ import { NavigationState, Step } from './state';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import WelcomePage from './pages/WelcomePage';
+import BeginSetupPage from './pages/BeginSetupPage';
 import AllowLocationPage from './pages/AllowLocationPage';
 import SelectLocationPage from './pages/SelectLocationPage';
 import EnableBluetoothPage from './pages/EnableBluetoothPage';
@@ -19,6 +20,7 @@ import FindingSensorPage from './pages/FindingSensorPage';
 import CompassPage from './pages/CompassPage';
 import AltitudePage from './pages/AltitudePage';
 import WifiCredentialsPage from './pages/WifiCredentialsPage';
+import DashboardPage from './pages/DashboardPage';
 
 let FastClick = require<any>('fastclick');
 
@@ -38,6 +40,9 @@ class Root extends React.Component<RootProps, {}> {
 
       [Step.Welcome]:
       <WelcomePage nav={nav} />,
+
+      [Step.BeginSetup]:
+      <BeginSetupPage nav={nav} />,
 
       [Step.AllowLocation]:
       <AllowLocationPage nav={nav} />,
@@ -73,6 +78,9 @@ class Root extends React.Component<RootProps, {}> {
       [Step.FindSensor]:
       <FindingSensorPage nav={nav} bluetoothManager={appState.bluetoothManager}
         appState={appState} />,
+
+      [Step.Dashboard]:
+      <DashboardPage nav={nav} />,
     };
 
     return (
@@ -97,19 +105,24 @@ function combineConsoleArguments(method: string) {
 }
 
 document.addEventListener('deviceready', () => {
-  // We must not construct AppState until after 'deviceready', because
-  // certain Cordova APIs are unavailable until after this event fires.
-  let appState = new AppState();
-  (window as any).appState = appState;
+  window.open = (window as any).cordova && (window as any).cordova.InAppBrowser.open;
 
   // Android doesn't log more than one argument to console.log, despite
   // the existence of cordova-plugin-console. Shim it ourselves, I guess.
-  if (appState.deviceInfo.platform === 'Android') {
+  if ((window as any).cordova && (window as any).cordova.platformId === 'android') {
     combineConsoleArguments('info');
     combineConsoleArguments('log');
     combineConsoleArguments('warn');
     combineConsoleArguments('error');
   }
+
+  // We must not construct AppState until after 'deviceready', because
+  // certain Cordova APIs are unavailable until after this event fires.
+  let appState = new AppState(onAppStateLoaded);
+  (window as any).appState = appState;
+});
+
+function onAppStateLoaded(appState: AppState) {
 
   document.addEventListener('backbutton', () => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') {
@@ -137,7 +150,7 @@ document.addEventListener('deviceready', () => {
   // the ontouchstart allows Safari to show :active states:
   // http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari
   document.body.ontouchstart = () => {};
-});
+}
 
 
 /**
@@ -162,7 +175,7 @@ function findActivePageContent(): HTMLElement | undefined {
  * own manual actions. We do the latter.
  */
 function handleSoftwareKeyboardWindowResizing() {
-  let platformId: string = (window as any).cordova.platformId;
+  let platformId: string = (window as any).cordova && (window as any).cordova.platformId;
   // Don't resize the webview when the keyboard comes up. This is only available on iOS.
   if (platformId === 'ios') {
     (window as any).cordova.plugins.Keyboard.disableScroll(true);

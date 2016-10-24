@@ -4,7 +4,7 @@ import { NavigationState } from '../state';
 import { BluetoothManager } from '../bluetooth';
 
 interface EnableBluetoothPageProps {
-  nav: NavigationState,
+  nav: NavigationState;
   bluetoothManager: BluetoothManager;
 }
 

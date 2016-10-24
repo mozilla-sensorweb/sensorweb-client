@@ -32,12 +32,12 @@ export class PageHeader extends React.Component<PageHeaderProps, {}> {
   render() {
     const nav = this.props.nav;
     const backAvailable = nav.currentStep > 0 && this.props.back !== false;
-    const nextAvailable = nav.currentStep < Step.length - 1 && this.props.next != null;
+    const nextAvailable = nav.currentStep < Step.Dashboard - 1 && this.props.next != null;
     const backEnabled = backAvailable;
     const nextEnabled = typeof this.props.next === 'function';
 
     let progressDots: any[] = [];
-    for (let i = 0; i < Step.length; i++) {
+    for (let i = 0; i < Step.Dashboard; i++) {
       let complete = nav.currentStep >= i;
       progressDots.push(<div key={i} className={'progress-dot ' + (complete ? 'complete' : '')} />);
     }

@@ -22,23 +22,67 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
       () => this.props.bluetoothManager.state === BTState.Discovered,
       () => this.sync());
 
-    setTimeout(() => {
-      this.props.bluetoothManager.connectToNearestSensor();
-    }, 1000);
+    // setTimeout(() => {
+    //   this.props.bluetoothManager.connectToNearestSensor();
+    // }, 1000);
   }
 
   sync() {
     let state = this.props.appState;
-    let payload = {
-      ssid: state.ssid,
-      password: state.password,
-      floor: state.floor,
-      lat: state.location && state.location.lat(),
-      lng: state.location && state.location.lng(),
-      direction: state.heading
-    };
-    console.log('WOULD SEND', payload);
-    this.props.nav.markComplete();
+
+    const SERVICE = '0123';
+    let encoder = new (window as any).TextEncoder('utf-8');
+
+    type QueueItem = { uuid: string, value: ArrayBuffer };
+    let queue: QueueItem[] = [];
+    let locationArray = new DataView(new ArrayBuffer(8));
+    locationArray.setFloat32(0, state.location && state.location.lat() || 0);
+    locationArray.setFloat32(4, state.location && state.location.lng() || 0);
+    queue.push({ uuid: '0002', value: locationArray.buffer });
+
+    let altitudeArray = new DataView(new ArrayBuffer(4));
+    altitudeArray.setInt32(0, state.floor || 0);
+    queue.push({ uuid: '0003', value: altitudeArray.buffer });
+
+    let headingArray = new DataView(new ArrayBuffer(4));
+    headingArray.setInt32(0, state.heading || 0);
+    queue.push({ uuid: '0004', value: headingArray.buffer });
+
+    let ssidArray: Uint8Array = encoder.encode(state.ssid || '');
+    queue.push({ uuid: '0005', value: ssidArray.buffer.slice(0, 20) });
+    queue.push({ uuid: '0006', value: ssidArray.buffer.slice(20, 40) });
+
+    let ssidLengthArray = new DataView(new ArrayBuffer(4));
+    ssidLengthArray.setInt32(0, ssidArray.byteLength);
+    queue.push({ uuid: '0007', value: ssidLengthArray.buffer });
+
+    let passwordArray: Uint8Array = encoder.encode(state.password || '');
+    queue.push({ uuid: '0008', value: passwordArray.buffer.slice(0, 20) });
+    queue.push({ uuid: '0009', value: passwordArray.buffer.slice(20, 40) });
+    queue.push({ uuid: '000A', value: passwordArray.buffer.slice(40, 60) });
+    queue.push({ uuid: '000B', value: passwordArray.buffer.slice(60, 80) });
+
+    let passwordLengthArray = new DataView(new ArrayBuffer(4));
+    passwordLengthArray.setInt32(0, passwordArray.byteLength);
+    queue.push({ uuid: '000C', value: passwordLengthArray.buffer });
+
+    let actionArray = new DataView(new ArrayBuffer(4));
+    actionArray.setInt32(0, 1);
+    queue.push({ uuid: '0001', value: actionArray.buffer });
+
+    let promise = Promise.resolve();
+    while (queue.length) {
+      promise = promise.then(((item: QueueItem) => {
+        console.log(`Writing ${item.uuid} (${item.value.byteLength} bytes)`);
+        return this.props.bluetoothManager.write(SERVICE, item.uuid, new Uint8Array(item.value));
+      }).bind(null, queue.shift()));
+    }
+    promise = promise.then(() => {
+      console.log('WROTE!');
+      this.props.nav.markComplete();
+    }, (err) => {
+      console.error('ERROR:', err);
+    });
   }
 
   componentWillUnmount() {

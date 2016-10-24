@@ -122,6 +122,10 @@ export class FakeBluetoothLE {
     this.later(success, { status: 'connected' });
   }
 
+  close(success: Success, error: Failure, params: Params) {
+    this.later(success);
+  }
+
   write(success: Success, error: Failure, params: Params) {
     this.later(success);
   }

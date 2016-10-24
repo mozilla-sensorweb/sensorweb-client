@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 
 export enum Step {
   Welcome,
+  BeginSetup,
   AllowLocation,
   SelectLocation,
   Compass,
@@ -11,7 +12,7 @@ export enum Step {
   Wifi,
   EnableBluetooth,
   FindSensor,
-  length
+  Dashboard,
 };
 
 export class NavigationState {

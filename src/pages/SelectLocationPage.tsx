@@ -37,7 +37,6 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   gpsControl: HTMLElement;
   addressInput: HTMLInputElement;
   disposers: Disposable[] = [];
-  @observable loading: boolean = true;
   @observable waitingForFirstGpsResult: boolean = true;
   @observable locationString: string = '';
   @observable typedAddress: string = '';
@@ -70,15 +69,15 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
       }
     }, (err: any) => {
       this.waitingForFirstGpsResult = false;
-      console.error(err); // XXX display error
-      if (err.code !== 3) {
+      console.error(err, err.code, err.message); // XXX display error
+      //if (err.code !== 3 /* timeout */) {
         // We'll want them to try to enter their address (wait for the page transition first)
         if (!this.didSelectLocation) {
           setTimeout(() => {
             this.addressInput.focus();
           }, 500);
         }
-      }
+      //}
     }, {
         enableHighAccuracy: true,
         maximumAge: 60000,
@@ -137,9 +136,9 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
     };
     this.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(this.gpsControl);
 
-    google.maps.event.addListenerOnce(this.map, 'tilesloaded', () => {
-      this.loading = false;
-    });
+    // google.maps.event.addListenerOnce(this.map, 'tilesloaded', () => {
+    //   this.loading = false;
+    // });
 
     this.disposers.push(this.map.addListener('click', () => {
       this.addressInput.blur();
@@ -248,14 +247,15 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
   }
 
   render() {
-    return <Page loading={false && this.loading}>
+    return <Page loading={this.waitingForFirstGpsResult}>
       <PageHeader nav={this.props.nav} title="Where is your sensor?"
         next={!this.waitingForGeocoding && !this.inputFocused && this.didSelectLocation && (() => this.submit())} />
       <PageContent>
         <section className="instruction">
-          {this.didSelectLocation || this.waitingForFirstGpsResult
-            ? <p>Drag the map to adjust.</p>
-            : <p>Please type your address. We couldn’t find your location automatically.</p>}
+          {this.waitingForFirstGpsResult
+            ? <p>Finding your location...</p> // loading
+            : this.didSelectLocation ?
+              <p>Drag the map to adjust.</p> : <p>Please type your address. We couldn’t find your location automatically.</p>}
         </section>
         <input type="text"
           ref={(el) => this.addressInput = el}

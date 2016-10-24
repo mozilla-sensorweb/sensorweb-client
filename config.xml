@@ -51,4 +51,5 @@
     <plugin name="wifiwizard" value="com.pylonproducts.wifiwizard.WifiWizard" />
     <plugin name="ionic-plugin-keyboard" spec="~2.2.1" />
     <preference name="KeyboardDisplayRequiresUserAction" value="false" />
+    <plugin name="cordova-plugin-nativestorage" spec="~2.0.2" />
 </widget>

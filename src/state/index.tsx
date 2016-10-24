@@ -1,4 +1,4 @@
-import { observable, autorun } from 'mobx';
+import { observable, autorun, autorunAsync, untracked } from 'mobx';
 import { NavigationState, Step } from './NavigationState';
 import { BluetoothManager, BTState } from '../bluetooth';
 
@@ -14,6 +14,10 @@ export class DeviceInfo {
   version: string; // "5.1.1"
 }
 
+interface StorageData {
+  didFinishSetup?: boolean;
+}
+
 export class AppState {
   deviceInfo: DeviceInfo;
   nav: NavigationState;
@@ -25,16 +29,65 @@ export class AppState {
   @observable ssid?: string;
   @observable password?: string;
 
-  constructor() {
+  @observable didFinishSetup?: boolean;
+
+  constructor(onAppStateLoaded: (appState: AppState) => void) {
     this.deviceInfo = new DeviceInfo();
     this.nav = new NavigationState();
     this.bluetoothManager = new BluetoothManager((window as any).bluetoothle, this.deviceInfo.platform === 'Android' );
 
     autorun(() => {
       const btState = this.bluetoothManager.state;
-      this.nav.mark(
-        Step.EnableBluetooth,
-        btState !== BTState.Disabled && btState !== BTState.Initializing);
+      untracked(() => {
+        this.nav.mark(
+          Step.EnableBluetooth,
+          btState !== BTState.Disabled && btState !== BTState.Initializing);
+        if (btState === BTState.Idle) {
+          console.log('BT: Noticed state was Idle, trying to connect.');
+          this.bluetoothManager.connectToNearestSensor();
+        }
+      });
+    });
+
+    this.loadFromStorage().then((data: StorageData) => {
+      console.log('Loaded App State:', JSON.stringify(data));
+      this.didFinishSetup = data.didFinishSetup;
+
+      onAppStateLoaded(this);
+      autorunAsync(() => {
+        this.saveToStorage({
+          didFinishSetup: this.didFinishSetup
+        });
+      }, 300);
+    });
+  }
+
+  saveToStorage(data: StorageData) {
+    console.log('Saving Storage:', JSON.stringify(data));
+    let NativeStorage = (window as any).NativeStorage;
+    if (!NativeStorage) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      NativeStorage.setItem('data', data, resolve, (err: any) => {
+        console.error('Unable to store data!', err);
+        resolve();
+      });
+    });
+  }
+
+  loadFromStorage() {
+    let NativeStorage = (window as any).NativeStorage;
+    if (!NativeStorage) {
+      return Promise.resolve({});
+    }
+    return new Promise<StorageData>((resolve) => {
+      NativeStorage.getItem('data', (data: any) => {
+        resolve(data || {});
+      }, (err: any) => {
+        console.error('Unable to load stored data!', err);
+        resolve({});
+      })
     });
   }
 }

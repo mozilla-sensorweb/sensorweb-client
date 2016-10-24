@@ -25,6 +25,11 @@
   &.small {
     padding: 0.5rem 1rem;
   }
+  &.secondary {
+    border: 1px solid var(--selection-background);
+    background: none;
+    color: var(--selection-background);
+  }
   &[disabled] {
     pointer-events: none;
     opacity: 0.5;
