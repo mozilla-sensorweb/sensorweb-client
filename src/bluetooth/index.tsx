@@ -8,7 +8,7 @@ export enum BTState {
   Scanning,
   Connecting,
   Connected,
-  Closing
+  Disconnecting
 }
 
 
@@ -33,7 +33,7 @@ export class BluetoothManager {
 
   private isAndroid: boolean;
 
-  MAX_SCAN_SECONDS = 15;
+  MAX_SCAN_MS = 15000;
   REQUIRED_SIGNAL_STRENGTH = -150;
   SERVICE_UUID = '0123';
 
@@ -77,7 +77,8 @@ export class BluetoothManager {
   subscribe(device: Device) {
     let readStatus = () => {
       if (!this.device) {
-        setTimeout(readStatus, 1000);
+        console.error('no device!!!');
+//        setTimeout(readStatus, 1000);
         return;
       }
       this.ble.read(this.device.id, this.SERVICE_UUID, '0000', (buffer: ArrayBuffer) => {
@@ -86,11 +87,19 @@ export class BluetoothManager {
         setTimeout(readStatus, 1000);
       }, (err: any) => {
         console.error('Error reading sensor status:', err);
-        setTimeout(readStatus, 1000);
+        this.state = BTState.Disconnecting;
+        this.ble.disconnect(device.id, () => {
+          this.state = BTState.Idle;
+        }, () => {
+          this.state = BTState.Idle;
+        });
+        //setTimeout(readStatus, 1000);
       });
     };
 
-    readStatus();
+    setTimeout(() => {
+      readStatus();
+    }, 1000);
 
     // XXX This doesn't work on devices...
     // this.ble.startNotification(device.id, this.SERVICE_UUID, '0000', (buffer: ArrayBuffer) => {
@@ -107,8 +116,21 @@ export class BluetoothManager {
 
     return new Promise((resolve, reject) => {
       this.state = BTState.Scanning;
-      this.ble.scan([requiredServiceUuid], this.MAX_SCAN_SECONDS, (device: Device) => {
-        resolve(device);
+      let stopTimeout = setTimeout(() => {
+        this.ble.stopScan();
+        reject('no device found');
+      }, this.MAX_SCAN_MS);
+
+      this.ble.startScan([requiredServiceUuid], (device: Device) => {
+        clearTimeout(stopTimeout);
+        this.ble.stopScan(() => {
+          setTimeout(() => {
+            resolve(device);
+          }, 1000);
+        }, (err: any) => {
+          console.error('Error stopping scan:', err);
+          reject(err);
+        });
       }, (err: any) => {
         reject(err);
       });
@@ -125,6 +147,7 @@ export class BluetoothManager {
         resolve(device);
       }, (err: any) => {
         this.device = undefined;
+        this.state = BTState.Idle;
         reject(err);
       });
     });
@@ -152,7 +175,11 @@ export class BluetoothManager {
 
   enable() {
     return new Promise((resolve, reject) => {
-      this.ble.enable(resolve, reject);
+      if (this.isAndroid) {
+        this.ble.enable(resolve, reject);
+      } else {
+        this.ble.showBluetoothSettings(resolve, reject);
+      }
     });
   }
 }
