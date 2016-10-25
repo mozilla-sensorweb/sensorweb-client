@@ -4,7 +4,7 @@ import { NavigationState } from '../state';
 
 export default function WelcomePage(props: { nav: NavigationState }) {
   return <Page>
-    <PageHeader nav={props.nav} noProgress title="SensorWeb" />
+    <PageHeader nav={props.nav} noProgress title="Welcome" />
     <PageContent>
       <section className="">
         <a className="button" onClick={() => props.nav.markComplete()}>I have a Sensor</a>

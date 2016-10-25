@@ -61,8 +61,8 @@ class Root extends React.Component<RootProps, {}> {
       } } />,
 
       [Step.Altitude]:
-      <AltitudePage nav={nav} floor={appState.floor} saveAltitude={(floor) => {
-        appState.floor = floor;
+      <AltitudePage nav={nav} altitude={appState.altitude} saveAltitude={(altitude) => {
+        appState.altitude = altitude;
       } } />,
 
       [Step.Wifi]:

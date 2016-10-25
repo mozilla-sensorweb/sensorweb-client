@@ -212,6 +212,7 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
           <section>
             <p><label htmlFor="password">Network Name</label><br />
               <input id="ssid"
+                type="text"
                 readOnly
                 onClick={(e) => this.onSelectAnotherNetwork()}
                 style={{ fontSize: 'larger' }}

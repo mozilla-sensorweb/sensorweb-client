@@ -17,7 +17,7 @@ export default class AllowLocationPage extends React.Component<AllowLocationPage
 
   render() {
     return <Page>
-      <PageHeader nav={this.props.nav} title="Getting Started"
+      <PageHeader nav={this.props.nav} title="Finding Your Location"
         next={this.submit.bind(this)} />
       <PageContent>
         <section style={{flexGrow: 1}}>
@@ -28,13 +28,13 @@ export default class AllowLocationPage extends React.Component<AllowLocationPage
           <br/>
           <div className="detail">
             <p>To store accurate data, we’ll need to know your location, direction,
-              altitude, and WiFi connection information.</p>
-            <p>Ready? Let’s get started!</p>
+              altitude, and WiFi connection information. This information will be shared
+              [in ways we will describe in the future].</p>
           </div>
         </section>
-        <section>
+        {/*<section>
           <a className="button" onClick={this.submit.bind(this)}>Allow Location</a>
-        </section>
+        </section>*/}
       </PageContent>
     </Page>;
   }

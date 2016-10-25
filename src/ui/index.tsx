@@ -111,8 +111,8 @@ export class Page extends React.Component<PageProps, {}> {
     if (this.props.modal) {
       return <ReactCSSTransitionGroup
         transitionName="modal"
-        transitionEnterTimeout={1000}
-        transitionLeaveTimeout={1000}>
+        transitionEnterTimeout={300}
+        transitionLeaveTimeout={300}>
         {this.props.visible && page}
       </ReactCSSTransitionGroup>
     } else {

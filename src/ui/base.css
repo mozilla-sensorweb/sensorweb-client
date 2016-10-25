@@ -27,7 +27,7 @@ h1, h2, h3, h4, h5, h6, p, ol, ul, dl, pre {
 }
 
 section {
-  padding: 1em;
+  padding: 1rem;
 
   & :last-child {
     margin-bottom: 0;
@@ -43,7 +43,7 @@ label {
   font-size: smaller;
 }
 
-input {
+input[type="text"], input[type="number"], input[type="password"] {
   font-family: inherit;
   box-sizing: border-box;
   padding: 0.5rem 0.8rem;

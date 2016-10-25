@@ -25,7 +25,7 @@ export class AppState {
 
   @observable location?: google.maps.LatLng;
   @observable heading?: number;
-  @observable floor?: number;
+  @observable altitude?: number;
   @observable ssid?: string;
   @observable password?: string;
 

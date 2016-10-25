@@ -41,7 +41,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
     queue.push({ uuid: '0002', value: locationArray.buffer });
 
     let altitudeArray = new DataView(new ArrayBuffer(4));
-    altitudeArray.setInt32(0, state.floor || 0);
+    altitudeArray.setInt32(0, state.altitude || 0);
     queue.push({ uuid: '0003', value: altitudeArray.buffer });
 
     let headingArray = new DataView(new ArrayBuffer(4));
@@ -99,7 +99,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
         {/*<TutorialImage src={require<string>('../assets/finding-sensor.svg')} />*/}
         <section className="instruction">
           <p>SSID: {state.ssid} {state.password}<br/>
-            Floor: {state.floor}<br/>
+            Altitude: {state.altitude}<br/>
 
             Direction: {state.heading}</p>
         </section>

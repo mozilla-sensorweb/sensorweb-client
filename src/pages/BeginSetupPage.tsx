@@ -4,7 +4,8 @@ import { NavigationState } from '../state';
 
 export default function BeginSetupPage(props: { nav: NavigationState }) {
   return <Page>
-    <PageHeader nav={props.nav} next={() => props.nav.markComplete()} />
+    <PageHeader nav={props.nav} next={() => props.nav.markComplete()}
+      title="Sensor Setup" />
     <PageContent>
       <section className="instruction">
         <p>Let’s set up your new sensor. This will take about five minutes.</p>
