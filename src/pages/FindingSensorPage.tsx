@@ -18,8 +18,8 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
   dispose: any;
 
   componentWillMount() {
-    this.dispose = when('bluetooth discovered',
-      () => this.props.bluetoothManager.state === BTState.Discovered,
+    this.dispose = when('bluetooth connected',
+      () => this.props.bluetoothManager.state === BTState.Connected,
       () => this.sync());
 
     // setTimeout(() => {

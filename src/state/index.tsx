@@ -2,6 +2,8 @@ import { observable, autorun, autorunAsync, untracked } from 'mobx';
 import { NavigationState, Step } from './NavigationState';
 import { BluetoothManager, BTState } from '../bluetooth';
 
+import { throttle } from 'lodash';
+
 export { NavigationState, Step };
 
 export class DeviceInfo {
@@ -34,8 +36,9 @@ export class AppState {
   constructor(onAppStateLoaded: (appState: AppState) => void) {
     this.deviceInfo = new DeviceInfo();
     this.nav = new NavigationState();
-    this.bluetoothManager = new BluetoothManager((window as any).bluetoothle, this.deviceInfo.platform === 'Android' );
+    this.bluetoothManager = new BluetoothManager((window as any).ble, this.deviceInfo.platform === 'Android' );
 
+    let tryToConnect = throttle(() => this.bluetoothManager.connectToNearestSensor(), 3000);
     autorun(() => {
       const btState = this.bluetoothManager.state;
       untracked(() => {
@@ -44,7 +47,7 @@ export class AppState {
           btState !== BTState.Disabled && btState !== BTState.Initializing);
         if (btState === BTState.Idle) {
           console.log('BT: Noticed state was Idle, trying to connect.');
-          this.bluetoothManager.connectToNearestSensor();
+          tryToConnect();
         }
       });
     });

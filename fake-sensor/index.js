@@ -3,7 +3,7 @@ let { Characteristic, Descriptor } = bleno;
 
 const SERVICE_UUID = '0123';
 let CHARS = {
-  status: { uuid: '0000' },
+  status: { uuid: '0000', properties: ['read', 'indicate'] },
   action: { uuid: '0001' },
   location: { uuid: '0002' },
   altitude: { uuid: '0003' },
@@ -17,7 +17,6 @@ let CHARS = {
   password4: { uuid: '000B' },
   passwordLength: { uuid: '000C' },
 }
-let characteristics = []; // Array of bleno.Characteristic
 
 function logData() {
   let ssid = combineToString(CHARS.ssidLength, [CHARS.ssid1, CHARS.ssid2]);
@@ -37,9 +36,23 @@ CHARS.action.onWrite = (buffer) => {
   logData();
 };
 
+setInterval(() => {
+  let arr = new Uint8Array(1);
+  arr[0] = Math.random() * 256 | 0;
+  setStatus(arr);
+}, 1000);
+
+function setStatus(buffer) {
+  CHARS.status.buffer = buffer;
+  let cb = CHARS.status.characteristic.updateValueCallback;
+  if (cb) {
+    console.log('calling back')
+    cb(buffer);
+  }
+}
 
 
-Object.keys(CHARS).forEach((key) => {
+let characteristics = Object.keys(CHARS).map((key) => {
   let info = CHARS[key];
   info.buffer = new Buffer(0);
   info.characteristic = new Characteristic({
@@ -47,7 +60,7 @@ Object.keys(CHARS).forEach((key) => {
     descriptors: [
       new Descriptor({ uuid: '2901', value: key }) // human-readable description
     ],
-    properties: ['read', 'write', 'writeWithoutResponse'],
+    properties: info.properties || ['read', 'write', 'writeWithoutResponse'],
     onReadRequest: (offset, callback) => {
       callback(Characteristic.RESULT_SUCCESS, info.buffer);
     },
@@ -59,8 +72,12 @@ Object.keys(CHARS).forEach((key) => {
       callback(Characteristic.RESULT_SUCCESS);
     },
   });
-  characteristics.push(info.characteristic);
+  return info.characteristic;
 });
+
+CHARS.status.characteristic.on('subscribe', () => {
+  console.log('SOMEONE SUBSCRIBED');
+})
 
 function combineToString(cLength, cValues) {
   let length = cLength.buffer.readUInt32BE(0);
@@ -73,7 +90,7 @@ bleno.on('stateChange', function(state) {
   console.log('on -> stateChange: ' + state);
 
   if (state === 'poweredOn') {
-    bleno.startAdvertising('echo', [SERVICE_UUID]);
+    bleno.startAdvertising('fakesensor', [SERVICE_UUID]);
   } else {
     bleno.stopAdvertising();
   }
