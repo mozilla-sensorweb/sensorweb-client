@@ -1,5 +1,6 @@
 
 import { observable, autorun } from 'mobx';
+import { Bluetooth, OnState, FakeBluetooth, Device } from './interface';
 
 export enum BTState {
   Initializing,
@@ -12,24 +13,11 @@ export enum BTState {
 }
 
 
-interface Device {
-  name: string;
-  id: string;
-  rssi: number;
-  advertising: any;
-  services?: string[];
-  characteristics?: any[];
-}
-
-// if (!(window as any).cordova) {
-//   (window as any).bluetoothle = new FakeBluetoothLE();
-// }
-
 export class BluetoothManager {
   @observable state = BTState.Initializing;
   @observable device: Device | undefined;
 
-  ble: any;
+  ble: Bluetooth;
 
   private isAndroid: boolean;
 
@@ -37,8 +25,8 @@ export class BluetoothManager {
   REQUIRED_SIGNAL_STRENGTH = -150;
   SERVICE_UUID = '0123';
 
-  constructor(ble: any, isAndroid: boolean) {
-    this.ble = ble;
+  constructor(ble: Bluetooth | undefined, isAndroid: boolean) {
+    this.ble = ble || new FakeBluetooth();
     this.isAndroid = isAndroid;
 
     console.log('Bluetooth initializing...');
@@ -49,7 +37,7 @@ export class BluetoothManager {
       this.state = BTState.Disabled;
     });
 
-    this.ble.startStateNotifications((state: string) => {
+    this.ble.startStateNotifications((state: OnState) => {
       // There are other states; TODO: handle unsupported/unauthorized states
       if (state === 'off' && this.state !== BTState.Disabled) {
         this.state = BTState.Disabled;
@@ -118,20 +106,21 @@ export class BluetoothManager {
       this.state = BTState.Scanning;
       let stopTimeout = setTimeout(() => {
         this.ble.stopScan();
+        this.state = BTState.Idle;
         reject('no device found');
       }, this.MAX_SCAN_MS);
 
       this.ble.startScan([requiredServiceUuid], (device: Device) => {
         clearTimeout(stopTimeout);
         this.ble.stopScan(() => {
-          setTimeout(() => {
-            resolve(device);
-          }, 1000);
+          resolve(device);
         }, (err: any) => {
           console.error('Error stopping scan:', err);
+          this.state = BTState.Idle;
           reject(err);
         });
       }, (err: any) => {
+        this.state = BTState.Idle;
         reject(err);
       });
     });
