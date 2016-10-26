@@ -1,0 +1,28 @@
+language: android
+env:
+    - BUILD_TYPE=android
+android:
+    components:
+        - platform-tools
+        - tools
+        - build-tools-23.0.1
+        - android-23
+        - appcompat-v7
+        - extra-android-support
+before_cache:
+      - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+    directories:
+        - $HOME/.gradle/caches/
+        - $HOME/.gradle/wrapper/
+before_install:
+    - git clone https://github.com/creationix/nvm.git /tmp/.nvm
+    - source /tmp/.nvm/nvm.sh
+    - nvm install 6.0
+    - nvm use --delete-prefix 6.0
+    - node --version && npm --version
+install:
+    - source ./scripts/bootstrap.sh
+script:
+    - source ./scripts/build.sh
+    
