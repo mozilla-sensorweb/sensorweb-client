@@ -38,7 +38,13 @@ export class AppState {
     this.nav = new NavigationState();
     this.bluetoothManager = new BluetoothManager((window as any).ble, this.deviceInfo.platform === 'Android' );
 
-    let tryToConnect = throttle(() => this.bluetoothManager.connectToNearestSensor(), 3000);
+    let tryToConnect = throttle(() => {
+      console.log('BT: Noticed state was Idle, trying to connect.');
+      // XXX this logic is not correct
+      if (this.bluetoothManager.state === BTState.Idle) {
+        this.bluetoothManager.connectToNearestSensor();
+      }
+    }, 3000);
     autorun(() => {
       const btState = this.bluetoothManager.state;
       untracked(() => {
@@ -46,7 +52,6 @@ export class AppState {
           Step.EnableBluetooth,
           btState !== BTState.Disabled && btState !== BTState.Initializing);
         if (btState === BTState.Idle) {
-          console.log('BT: Noticed state was Idle, trying to connect.');
           tryToConnect();
         }
       });

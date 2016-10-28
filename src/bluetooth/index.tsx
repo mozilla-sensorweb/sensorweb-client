@@ -12,10 +12,10 @@ export enum BTState {
   Disconnecting
 }
 
-
 export class BluetoothManager {
   @observable state = BTState.Initializing;
-  @observable device: Device | undefined;
+  @observable device?: Device;
+  @observable sensorStatus?: string;
 
   ble: Bluetooth;
 
@@ -42,6 +42,7 @@ export class BluetoothManager {
       if (state === 'off' && this.state !== BTState.Disabled) {
         this.state = BTState.Disabled;
         this.device = undefined;
+        this.sensorStatus = undefined;
       } else if (state === 'on' && this.state === BTState.Disabled) {
         this.state = BTState.Idle;
       }
@@ -69,9 +70,11 @@ export class BluetoothManager {
 //        setTimeout(readStatus, 1000);
         return;
       }
+
       this.ble.read(this.device.id, this.SERVICE_UUID, '0000', (buffer: ArrayBuffer) => {
-        let ints = new Uint8Array(buffer);
-        console.log('Sensor status is:', ints[0]);
+        this.sensorStatus = new (window as any).TextDecoder('utf-8').decode(buffer);
+
+        console.log('Sensor status is:', this.sensorStatus);
         setTimeout(readStatus, 1000);
       }, (err: any) => {
         console.error('Error reading sensor status:', err);
@@ -105,12 +108,15 @@ export class BluetoothManager {
     return new Promise((resolve, reject) => {
       this.state = BTState.Scanning;
       let stopTimeout = setTimeout(() => {
+        console.log('IN TIMEOUT');
         this.ble.stopScan();
         this.state = BTState.Idle;
         reject('no device found');
       }, this.MAX_SCAN_MS);
+      console.log('Setting timeout', this.MAX_SCAN_MS, stopTimeout);
 
       this.ble.startScan([requiredServiceUuid], (device: Device) => {
+        console.log('CLEAR TIMEOUT found', stopTimeout);
         clearTimeout(stopTimeout);
         this.ble.stopScan(() => {
           resolve(device);
@@ -120,6 +126,8 @@ export class BluetoothManager {
           reject(err);
         });
       }, (err: any) => {
+        console.log('CLEAR TIMEOUT err', stopTimeout, err);
+        clearTimeout(stopTimeout);
         this.state = BTState.Idle;
         reject(err);
       });
@@ -136,23 +144,25 @@ export class BluetoothManager {
         resolve(device);
       }, (err: any) => {
         this.device = undefined;
+        this.sensorStatus = undefined;
         this.state = BTState.Idle;
         reject(err);
       });
     });
   }
 
-  write(serviceUuid: string, characteristicUuid: string, value: Uint8Array): Promise<{}> {
-    if (value.length === 0) {
-      return Promise.resolve({});
-    }
+  write(serviceUuid: string, characteristicUuid: string, value: ArrayBuffer): Promise<{}> {
+    // if (value.byteLength === 0) {
+    //   return Promise.resolve({});
+    // }
     return new Promise((resolve, reject) => {
       if (!this.device) {
         reject('not connected');
         return;
       }
       console.log(`WRITE: ${characteristicUuid} ${value}`);
-      this.ble.write(this.device.id, serviceUuid, characteristicUuid, value.buffer, () => {
+      console.log(JSON.stringify(this.device));
+      this.ble.write(this.device.id, serviceUuid, characteristicUuid, value, () => {
         console.log('Wrote', value);
         resolve();
       }, (err: any) => {

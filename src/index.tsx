@@ -24,6 +24,7 @@ import DashboardPage from './pages/DashboardPage';
 
 let FastClick = require<any>('fastclick');
 
+import { BTState } from './bluetooth';
 import { AppState } from './state';
 
 interface RootProps {
@@ -85,6 +86,10 @@ class Root extends React.Component<RootProps, {}> {
 
     return (
       <div className="root">
+        <div className={['bluetoothStatus', BTState[appState.bluetoothManager.state]].join(' ')}>
+        {BTState[appState.bluetoothManager.state]}
+        {appState.bluetoothManager.sensorStatus && (' - ' + appState.bluetoothManager.sensorStatus)}
+        </div>
         <ReactCSSTransitionGroup
           transitionName={nav.wentBackwards ? 'previous-page' : 'next-page'}
           transitionEnterTimeout={500}

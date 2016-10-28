@@ -74,7 +74,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
     while (queue.length) {
       promise = promise.then(((item: QueueItem) => {
         console.log(`Writing ${item.uuid} (${item.value.byteLength} bytes)`);
-        return this.props.bluetoothManager.write(SERVICE, item.uuid, new Uint8Array(item.value));
+        return this.props.bluetoothManager.write(SERVICE, item.uuid, item.value);
       }).bind(null, queue.shift()));
     }
     promise = promise.then(() => {

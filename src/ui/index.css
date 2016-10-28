@@ -108,3 +108,24 @@ ul.list {
   width: 1em;
   height: 1.4em;
 }
+
+
+/*  Initializing,
+  Disabled,
+  Idle,
+  Scanning,
+  Connecting,
+  Connected,
+  Disconnecting */
+
+.bluetoothStatus {
+  font-size: 10px;
+  padding: 2px;
+  color: white;
+  background: #444;
+  text-align: center;
+}
+
+.bluetoothStatus.Connected {
+  background: #060;
+}

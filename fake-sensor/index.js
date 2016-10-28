@@ -3,7 +3,7 @@ let { Characteristic, Descriptor } = bleno;
 
 const SERVICE_UUID = '0123';
 let CHARS = {
-  status: { uuid: '0000', properties: ['read', 'indicate'] },
+  status: { uuid: '0000', properties: ['read'] },
   action: { uuid: '0001' },
   location: { uuid: '0002' },
   altitude: { uuid: '0003' },
@@ -13,9 +13,9 @@ let CHARS = {
   ssidLength: { uuid: '0007' },
   password1: { uuid: '0008' },
   password2: { uuid: '0009' },
-  password3: { uuid: '000A' },
-  password4: { uuid: '000B' },
-  passwordLength: { uuid: '000C' },
+  password3: { uuid: '000a' },
+  password4: { uuid: '000b' },
+  passwordLength: { uuid: '000c' },
 }
 
 function logData() {
@@ -34,20 +34,15 @@ function logData() {
 
 CHARS.action.onWrite = (buffer) => {
   logData();
+  setStatus('setupComplete');
 };
 
-setInterval(() => {
-  let arr = new Uint8Array(1);
-  arr[0] = Math.random() * 256 | 0;
-  setStatus(arr);
-}, 1000);
-
-function setStatus(buffer) {
-  CHARS.status.buffer = buffer;
+function setStatus(str) {
+  CHARS.status.buffer = new Buffer(str, 'utf-8');
   let cb = CHARS.status.characteristic.updateValueCallback;
   if (cb) {
-    console.log('calling back')
-    cb(buffer);
+    console.log('calling back');
+    cb(CHARS.status.buffer);
   }
 }
 
@@ -61,10 +56,14 @@ let characteristics = Object.keys(CHARS).map((key) => {
       new Descriptor({ uuid: '2901', value: key }) // human-readable description
     ],
     properties: info.properties || ['read', 'write', 'writeWithoutResponse'],
+    //secure: info.properties || ['read', 'write', 'writeWithoutResponse'],
     onReadRequest: (offset, callback) => {
+      console.log('READ?', key, info.buffer);
       callback(Characteristic.RESULT_SUCCESS, info.buffer);
     },
+    value: null,
     onWriteRequest: (data, offset, withoutResponse, callback) => {
+      console.log("WRITE?", key, data, offset, withoutResponse);
       info.buffer = data;
       if (info.onWrite) {
         info.onWrite(info.buffer);
@@ -74,6 +73,13 @@ let characteristics = Object.keys(CHARS).map((key) => {
   });
   return info.characteristic;
 });
+
+
+
+setStatus('needsSetup');
+
+
+
 
 CHARS.status.characteristic.on('subscribe', () => {
   console.log('SOMEONE SUBSCRIBED');
