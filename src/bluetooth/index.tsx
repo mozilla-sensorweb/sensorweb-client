@@ -1,6 +1,7 @@
 
-import { observable, autorun } from 'mobx';
+import { observable, autorun, untracked } from 'mobx';
 import { Bluetooth, OnState, FakeBluetooth, Device } from './interface';
+import { throttle } from 'lodash';
 
 export enum BTState {
   Initializing,
@@ -11,6 +12,9 @@ export enum BTState {
   Connected,
   Disconnecting
 }
+
+const UTF8_DECODER = new (window as any).TextDecoder('utf-8');
+const STATUS_CHARACTERISTIC = '0000';
 
 export class BluetoothManager {
   @observable state = BTState.Initializing;
@@ -48,96 +52,35 @@ export class BluetoothManager {
       }
     });
 
+    let tryToConnect = throttle(() => {
+      console.log('BT: Noticed state was Idle, trying to connect.');
+      // XXX this logic is not correct
+      if (this.state === BTState.Idle) {
+        this.connectToNearestSensor();
+      }
+    }, 3000);
+
     autorun(() => {
       console.log(`BT State: ${BTState[this.state]}`);
-    });
-  }
-
-  connectToNearestSensor() {
-    return this.scanForDeviceWithService(this.SERVICE_UUID).then((info) => {
-      return this.connect(info);
-    }).then((device) => {
-      this.subscribe(device);
-    }).catch((err) => {
-      console.error(JSON.stringify(err));
-    });
-  }
-
-  subscribe(device: Device) {
-    let readStatus = () => {
-      if (!this.device) {
-        console.error('no device!!!');
-//        setTimeout(readStatus, 1000);
-        return;
-      }
-
-      this.ble.read(this.device.id, this.SERVICE_UUID, '0000', (buffer: ArrayBuffer) => {
-        this.sensorStatus = new (window as any).TextDecoder('utf-8').decode(buffer);
-
-        console.log('Sensor status is:', this.sensorStatus);
-        setTimeout(readStatus, 1000);
-      }, (err: any) => {
-        console.error('Error reading sensor status:', err);
-        this.state = BTState.Disconnecting;
-        this.ble.disconnect(device.id, () => {
-          this.state = BTState.Idle;
-        }, () => {
-          this.state = BTState.Idle;
-        });
-        //setTimeout(readStatus, 1000);
-      });
-    };
-
-    setTimeout(() => {
-      readStatus();
-    }, 1000);
-
-    // XXX This doesn't work on devices...
-    // this.ble.startNotification(device.id, this.SERVICE_UUID, '0000', (buffer: ArrayBuffer) => {
-    //   console.log('NEW VALUE:', buffer);
-    // }, (err: any) => {
-    //   console.error('FAILURE:', err);
-    // });
-  }
-
-  private scanForDeviceWithService(requiredServiceUuid: string): Promise<Device> {
-    if (this.state !== BTState.Idle) {
-      throw new Error(`Unable to scan() while in ${BTState[this.state]} state.`);
-    }
-
-    return new Promise((resolve, reject) => {
-      this.state = BTState.Scanning;
-      let stopTimeout = setTimeout(() => {
-        console.log('IN TIMEOUT');
-        this.ble.stopScan();
-        this.state = BTState.Idle;
-        reject('no device found');
-      }, this.MAX_SCAN_MS);
-      console.log('Setting timeout', this.MAX_SCAN_MS, stopTimeout);
-
-      this.ble.startScan([requiredServiceUuid], (device: Device) => {
-        console.log('CLEAR TIMEOUT found', stopTimeout);
-        clearTimeout(stopTimeout);
-        this.ble.stopScan(() => {
-          resolve(device);
-        }, (err: any) => {
-          console.error('Error stopping scan:', err);
-          this.state = BTState.Idle;
-          reject(err);
-        });
-      }, (err: any) => {
-        console.log('CLEAR TIMEOUT err', stopTimeout, err);
-        clearTimeout(stopTimeout);
-        this.state = BTState.Idle;
-        reject(err);
+      untracked(() => {
+        if (this.state === BTState.Idle) {
+          tryToConnect();
+        }
       });
     });
+
+    this.heartbeat();
   }
 
-  private connect(device: Device): Promise<Device> {
-    return new Promise((resolve, reject) => {
+  async connectToNearestSensor() {
+    let device = await this.scanForDeviceWithService(this.SERVICE_UUID);
+    await this.connect(device.id);
+  }
+
+  async connect(deviceId: string) {
+    return new Promise<Device>((resolve, reject) => {
       this.state = BTState.Connecting;
-      this.ble.connect(device.id, (device: Device) => {
+      this.ble.connect(deviceId, (device: Device) => {
         this.state = BTState.Connected;
         this.device = device;
         console.log('Connected to:', JSON.stringify(device));
@@ -151,10 +94,80 @@ export class BluetoothManager {
     });
   }
 
+  async heartbeat() {
+    try {
+      if (!this.device) {
+        return;
+      }
+      let buffer = await this.read(STATUS_CHARACTERISTIC);
+      this.sensorStatus = UTF8_DECODER.decode(buffer);
+      console.log('Sensor status is:', this.sensorStatus);
+    } catch (e) {
+      console.error('Heartbeat error:', e);
+      this.state = BTState.Disconnecting;
+      await this.disconnect();
+    } finally {
+      setTimeout(this.heartbeat.bind(this), 3000);
+    }
+  }
+
+  async disconnect() {
+    return new Promise((resolve) => {
+      if (!this.device) {
+        resolve();
+        return;
+      }
+      this.ble.disconnect(this.device.id, resolve, resolve);
+    }).then(() => {
+      this.state = BTState.Idle;
+    });
+  }
+
+  async read(characteristicUuid: string) {
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      if (!this.device) {
+        reject('no device connected, cannot read.');
+        return;
+      }
+      this.ble.read(this.device.id, this.SERVICE_UUID, characteristicUuid, (buffer: ArrayBuffer) => {
+        resolve(buffer);
+      }, (err: any) => {
+        reject(err);
+      });
+    });
+  }
+
+  private scanForDeviceWithService(requiredServiceUuid: string): Promise<Device> {
+    if (this.state !== BTState.Idle) {
+      throw new Error(`Unable to scan() while in ${BTState[this.state]} state.`);
+    }
+
+    return new Promise((resolve, reject) => {
+      this.state = BTState.Scanning;
+      let stopTimeout = setTimeout(() => {
+        this.ble.stopScan();
+        this.state = BTState.Idle;
+        reject('no device found');
+      }, this.MAX_SCAN_MS);
+
+      this.ble.startScan([requiredServiceUuid], (device: Device) => {
+        clearTimeout(stopTimeout);
+        this.ble.stopScan(() => {
+          resolve(device);
+        }, (err: any) => {
+          console.error('Error stopping scan:', err);
+          this.state = BTState.Idle;
+          reject(err);
+        });
+      }, (err: any) => {
+        clearTimeout(stopTimeout);
+        this.state = BTState.Idle;
+        reject(err);
+      });
+    });
+  }
+
   write(serviceUuid: string, characteristicUuid: string, value: ArrayBuffer): Promise<{}> {
-    // if (value.byteLength === 0) {
-    //   return Promise.resolve({});
-    // }
     return new Promise((resolve, reject) => {
       if (!this.device) {
         reject('not connected');
