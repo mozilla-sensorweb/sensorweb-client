@@ -1,33 +1,67 @@
 import React from 'react';
-import { observable, autorunAsync, observe, runInAction, action, computed, reaction } from 'mobx';
+import { observable, when, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import { Page, PageHeader, PageContent } from '../ui';
 import { NavigationState } from '../state';
 import { debounce, Cancelable } from 'lodash';
+
+import NetConnectionModal from './NetConnectionModal';
+
+const MAPS_API_KEY = 'AIzaSyA_QULMpHLgnha_jMe-Ie-DancN1Bz4uEE';
+
+class GoogleMapsLoader {
+  @observable loaded: boolean = false;
+  readonly scriptSrc: string;
+  private timeoutId: number;
+
+  constructor(apiKey: string) {
+    const CALLBACK_NAME = 'initMap';
+    (window as any)[CALLBACK_NAME] = this.onMapsReady.bind(this);
+    this.scriptSrc = 'foo'//`https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${CALLBACK_NAME}`;
+    this.attemptLoad();
+  }
+
+  attemptLoad() {
+    console.log('attempting load');
+    let script = document.createElement('script');
+    script.async = true;
+    script.defer = true;
+    script.src = this.scriptSrc;
+    script.onerror = this.onScriptError.bind(this);
+    this.timeoutId = setTimeout(this.onScriptError.bind(this), 5000);
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  private finishLoad() {
+    clearTimeout(this.timeoutId);
+  }
+
+  onScriptError(e: any) {
+    this.finishLoad();
+    console.log('onScriptError', e)
+    setTimeout(() => {
+      this.attemptLoad();
+    }, 1000);
+  }
+
+  onMapsReady() {
+    this.finishLoad();
+    console.log('onMapsReady');
+    this.loaded = true;
+  }
+}
+
+export let googleMapsLoader = new GoogleMapsLoader(MAPS_API_KEY);
+
+type Disposable = (() => void) | google.maps.MapsEventListener | Cancelable;
+
+const DEFAULT_ZOOM = 18;
 
 interface SelectLocationPageProps {
   nav: NavigationState;
   location?: google.maps.LatLng;
   saveLocation(location: google.maps.LatLng): void;
 }
-
-let MAPS_API_KEY = 'AIzaSyA_QULMpHLgnha_jMe-Ie-DancN1Bz4uEE';
-let MAPS_API_URL = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=initMap`;
-
-let script = document.createElement('script');
-script.async = true;
-script.defer = true;
-
-script.src = MAPS_API_URL;
-document.getElementsByTagName('head')[0].appendChild(script);
-
-(window as any).initMap = function () {
-  console.log('maps loaded');
-}
-
-type Disposable = (() => void) | google.maps.MapsEventListener | Cancelable;
-
-const DEFAULT_ZOOM = 18;
 
 @observer
 export default class SelectLocationPage extends React.Component<SelectLocationPageProps, {}> {
@@ -51,39 +85,12 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
       this.selectLocation(this.props.location);
     }
 
-    // XXX: retry google maps, warn on no internet
-    if (typeof google === 'undefined') {
-      (window as any).initMap = this.loadMap.bind(this);
-    } else {
+    this.disposers.push(when(() => googleMapsLoader.loaded, () => {
+      // Timeout required to allow page transition animation to complete properly...
       setTimeout(() => {
         this.loadMap();
       }, 0);
-    }
-
-    // If we're already tracking the current GPS location, move it to match.
-    let watchPositionId = navigator.geolocation.watchPosition((location) => {
-      this.waitingForFirstGpsResult = false;
-      this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
-      if (this.isCurrentlyTrackingGps || !this.didSelectLocation) {
-        this.selectLocation(this.currentGpsLocation);
-      }
-    }, (err: any) => {
-      this.waitingForFirstGpsResult = false;
-      console.error(err, err.code, err.message); // XXX display error
-      //if (err.code !== 3 /* timeout */) {
-        // We'll want them to try to enter their address (wait for the page transition first)
-        if (!this.didSelectLocation) {
-          setTimeout(() => {
-            this.addressInput.focus();
-          }, 500);
-        }
-      //}
-    }, {
-        enableHighAccuracy: true,
-        maximumAge: 60000,
-        timeout: 5000
-      });
-    this.disposers.push(() => navigator.geolocation.clearWatch(watchPositionId));
+    }));
   }
 
   get isCurrentlyTrackingGps() {
@@ -159,6 +166,35 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
     this.disposers.push(() => {
       removeEventListener('resize', resizeHandler);
     });
+
+    this.trackPosition();
+  }
+
+  trackPosition() {
+    // If we're already tracking the current GPS location, move it to match.
+    let watchPositionId = navigator.geolocation.watchPosition((location) => {
+      this.waitingForFirstGpsResult = false;
+      this.currentGpsLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+      if (this.isCurrentlyTrackingGps || !this.didSelectLocation) {
+        this.selectLocation(this.currentGpsLocation);
+      }
+    }, (err: any) => {
+      this.waitingForFirstGpsResult = false;
+      console.error(err, err.code, err.message); // XXX display error
+      //if (err.code !== 3 /* timeout */) {
+        // We'll want them to try to enter their address (wait for the page transition first)
+        if (!this.didSelectLocation) {
+          setTimeout(() => {
+            this.addressInput.focus();
+          }, 500);
+        }
+      //}
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 60000,
+        timeout: 5000
+      });
+    this.disposers.push(() => navigator.geolocation.clearWatch(watchPositionId));
   }
 
   getWrappedCenter(): google.maps.LatLng {
@@ -248,6 +284,7 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
 
   render() {
     return <Page loading={this.waitingForFirstGpsResult}>
+      <NetConnectionModal nav={this.props.nav} visible={!googleMapsLoader.loaded} />
       <PageHeader nav={this.props.nav} title="Where is your sensor?"
         next={!this.waitingForGeocoding && !this.inputFocused && this.didSelectLocation && (() => this.submit())} />
       <PageContent>

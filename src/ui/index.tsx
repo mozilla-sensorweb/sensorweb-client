@@ -110,8 +110,14 @@ export class Page extends React.Component<PageProps, {}> {
 
     if (this.props.modal) {
       return <ReactCSSTransitionGroup
-        transitionName="modal"
+        transitionName={ {
+          enter: 'modal-enter',
+          leave: 'modal-leave',
+          appear: 'modal-enter'
+        } }
         transitionEnterTimeout={300}
+        transitionAppear={true}
+        transitionAppearTimeout={300}
         transitionLeaveTimeout={300}>
         {this.props.visible && page}
       </ReactCSSTransitionGroup>

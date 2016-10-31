@@ -137,17 +137,17 @@
   overflow-y: hidden;
 }
 
-.next-page-enter .PageHeader, .previous-page-enter .PageHeader,
-.next-page-leave .PageHeader, .previous-page-leave .PageHeader {
+.next-page-enter > .Page > .PageHeader, .previous-page-enter > .Page > .PageHeader,
+.next-page-leave > .Page > .PageHeader, .previous-page-leave > .Page > .PageHeader {
   transition: all 200ms ease;
 }
 
-.next-page-enter .PageHeader, .previous-page-leave.previous-page-leave-active .PageHeader,
-.next-page-leave.next-page-leave-active .PageHeader, .previous-page-enter .PageHeader {
+.next-page-enter > .Page > .PageHeader, .previous-page-leave.previous-page-leave-active > .Page > .PageHeader,
+.next-page-leave.next-page-leave-active > .Page > .PageHeader, .previous-page-enter > .Page > .PageHeader {
   opacity: 0;
 }
-.next-page-enter.next-page-enter-active .PageHeader, .previous-page-leave .PageHeader,
-.next-page-leave .PageHeader, .previous-page-enter.previous-page-enter-active .PageHeader {
+.next-page-enter.next-page-enter-active > .Page > .PageHeader, .previous-page-leave > .Page > .PageHeader,
+.next-page-leave > .Page > .PageHeader, .previous-page-enter.previous-page-enter-active > .Page > .PageHeader {
   opacity: 1;
 }
 
