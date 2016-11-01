@@ -15,7 +15,7 @@ export class DeviceInfo {
 }
 
 interface StorageData {
-  didFinishSetup?: boolean;
+  cachedSensorStatus?: string;
 }
 
 export class AppState {
@@ -29,7 +29,9 @@ export class AppState {
   @observable ssid?: string;
   @observable password?: string;
 
-  @observable didFinishSetup?: boolean;
+  // The status of the sensor, when we last contacted it, tells us whether
+  // to show the setup flow or the main dashboard.
+  @observable cachedSensorStatus?: string;
 
   constructor(onAppStateLoaded: (appState: AppState) => void) {
     this.deviceInfo = new DeviceInfo();
@@ -47,14 +49,24 @@ export class AppState {
 
     this.loadFromStorage().then((data: StorageData) => {
       console.log('Loaded App State:', JSON.stringify(data));
-      this.didFinishSetup = data.didFinishSetup;
+      this.cachedSensorStatus = data.cachedSensorStatus;
 
-      onAppStateLoaded(this);
       autorunAsync(() => {
         this.saveToStorage({
-          didFinishSetup: this.didFinishSetup
+          cachedSensorStatus: this.cachedSensorStatus
         });
       }, 300);
+
+      autorun(() => {
+        let previousStatus = this.cachedSensorStatus;
+        this.cachedSensorStatus = this.bluetoothManager.sensorStatus;
+        // XXX: what to do when sensor status then errors out later?
+        if (previousStatus !== this.cachedSensorStatus && this.cachedSensorStatus === 'setupComplete') {
+          this.nav._currentStep = Step.Dashboard;
+        }
+      });
+
+      onAppStateLoaded(this);
     });
   }
 
