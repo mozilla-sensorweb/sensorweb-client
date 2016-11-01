@@ -17,7 +17,7 @@ class GoogleMapsLoader {
   constructor(apiKey: string) {
     const CALLBACK_NAME = 'initMap';
     (window as any)[CALLBACK_NAME] = this.onMapsReady.bind(this);
-    this.scriptSrc = 'foo'//`https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${CALLBACK_NAME}`;
+    this.scriptSrc = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${CALLBACK_NAME}`;
     this.attemptLoad();
   }
 
