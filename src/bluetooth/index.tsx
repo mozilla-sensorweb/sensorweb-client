@@ -2,6 +2,7 @@
 import { observable, autorun, untracked } from 'mobx';
 import { Bluetooth, OnState, FakeBluetooth, Device } from './interface';
 import { throttle } from 'lodash';
+import { TextDecoder } from 'text-encoding';
 
 export enum BTState {
   Initializing,
@@ -13,7 +14,7 @@ export enum BTState {
   Disconnecting
 }
 
-const UTF8_DECODER = new (window as any).TextDecoder('utf-8');
+const UTF8_DECODER = new TextDecoder('utf-8');
 const STATUS_CHARACTERISTIC = '0000';
 
 export class BluetoothManager {
@@ -100,7 +101,7 @@ export class BluetoothManager {
         return;
       }
       let buffer = await this.read(STATUS_CHARACTERISTIC);
-      this.sensorStatus = UTF8_DECODER.decode(buffer);
+      this.sensorStatus = UTF8_DECODER.decode(new Uint8Array(buffer));
       console.log('Sensor status is:', this.sensorStatus);
     } catch (e) {
       console.error('Heartbeat error:', e);

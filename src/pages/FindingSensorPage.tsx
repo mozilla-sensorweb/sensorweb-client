@@ -4,6 +4,7 @@ import { NavigationState } from '../state';
 import { observer } from 'mobx-react';
 import { when } from 'mobx';
 import { BluetoothManager, BTState } from '../bluetooth';
+import { TextEncoder } from 'text-encoding';
 
 import { AppState } from '../state';
 
@@ -31,7 +32,7 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
     let state = this.props.appState;
 
     const SERVICE = '0123';
-    let encoder = new (window as any).TextEncoder('utf-8');
+    let encoder = new TextEncoder('utf-8');
 
     type QueueItem = { uuid: string, value: ArrayBuffer };
     let queue: QueueItem[] = [];

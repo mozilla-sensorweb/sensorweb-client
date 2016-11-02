@@ -1,5 +1,6 @@
 // These imports inject dependencies like CSS and index.html
 import 'babel-polyfill';
+import 'text-encoding';
 
 import './ui/index.css';
 import 'file?name=[name].[ext]!./index.html';
