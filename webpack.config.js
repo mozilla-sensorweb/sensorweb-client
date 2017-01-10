@@ -1,47 +1,54 @@
+const path = require('path');
+const webpack = require('webpack');
 var CleanWebpackPlugin = require('clean-webpack-plugin');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+const BUILD_DIR = path.resolve(__dirname, './www');
+let isProd = (process.env.NODE_ENV === 'production');
 
 module.exports = {
-  entry: [
-    'babel-polyfill',
-    './src/index'
-  ],
-  output: {
-    path: './www',
-    filename: 'sensorweb.out.js',
+  entry: {
+    main: './src/index.tsx'
   },
   resolve: {
-    extensions: ['', '.ts', '.tsx', '.js', '.jsx', '.css']
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
-  devtool: 'source-map',
-  module: {
-    loaders: [
-      // note that babel-loader is configured to run after ts-loader
-      { test: /\.ts(x?)$/, loader: 'babel-loader!ts-loader' },
-      { test: /\.css$/,
-        loader: ExtractTextPlugin.extract('style-loader', ['css-loader?sourceMap&importLoaders=1!postcss-loader'])
-      },
-      { test: /\.(eot|svg|ttf|woff|woff2|png|jpg)$/,
-        loader: 'url-loader?limit=10000'
-      }
-    ],
-    preLoaders: [
-      { test: /\.js$/, loader: "source-map-loader" }
-    ],
+  output: {
+    path: BUILD_DIR,
+    filename: '[name].js',
   },
-  postcss: function(webpack) {
-    return [
-      require('postcss-import')({
-        addDependencyTo: webpack
-      }),
-      require('postcss-url')({
-
-      }),
-      require('postcss-cssnext')()
-    ];
+  devServer: {
+    contentBase: path.join(__dirname, 'dist'),
+    compress: true,
+    port: 9000,
   },
+  devtool: isProd ? 'source-map' : 'inline-source-map',
   plugins: [
-    new CleanWebpackPlugin(['www']),
-    new ExtractTextPlugin('sensorweb.out.css')
-  ]
+    new CleanWebpackPlugin([BUILD_DIR]),
+    new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      debug: true
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: true,
+      mangle: false,    // DEMO ONLY: Don't change variable names.
+      beautify: true,   // DEMO ONLY: Preserve whitespace
+      output: {
+        comments: true  // DEMO ONLY: Helpful comments
+      },
+      sourceMap: true
+    })
+  ],
+  module: {
+    rules: [{
+      oneOf: [
+        { test: /\.tsx?$/, use: ['babel-loader', 'ts-loader'] },
+        { test: /index\.html/, use: 'file-loader?name=[name].[ext]' },
+        { test: /(.*)/, use: 'file-loader?name=[name].[hash].[ext]',
+          include: [
+            path.resolve(__dirname, 'src')
+          ]
+        },
+      ]
+    }]
+  }
 };

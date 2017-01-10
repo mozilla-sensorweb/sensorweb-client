@@ -1,9 +1,8 @@
 // These imports inject dependencies like CSS and index.html
 import 'babel-polyfill';
-import 'text-encoding';
 
-import './ui/index.css';
-import 'file?name=[name].[ext]!./index.html';
+//import './ui/index.css';
+import './index.html';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -168,7 +167,7 @@ function findActivePageContent(): HTMLElement | undefined {
     if (el.classList.contains('PageContent')) {
       return el as HTMLElement;
     }
-    el = el.parentElement;
+    el = el.parentElement!;
   }
 }
 
