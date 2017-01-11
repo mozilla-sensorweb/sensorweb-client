@@ -1,7 +1,7 @@
 import React from 'react';
 import { observable, when, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { Page, PageHeader, PageContent } from '../ui';
+import { Page, PageHeader, PageContent, Section } from '../ui';
 import { NavigationState } from '../state';
 import { debounce, Cancelable } from 'lodash';
 
@@ -288,12 +288,12 @@ export default class SelectLocationPage extends React.Component<SelectLocationPa
       <PageHeader nav={this.props.nav} title="Where is your sensor?"
         next={!this.waitingForGeocoding && !this.inputFocused && this.didSelectLocation && (() => this.submit())} />
       <PageContent>
-        <section className="instruction">
+        <Section>
           {this.waitingForFirstGpsResult
             ? <p>Finding your location...</p> // loading
             : this.didSelectLocation ?
               <p>Drag the map to adjust.</p> : <p>Please type your address. We couldn’t find your location automatically.</p>}
-        </section>
+        </Section>
         <input type="text"
           ref={(el) => this.addressInput = el}
           disabled={this.waitingForGeocoding}

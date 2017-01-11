@@ -4,139 +4,35 @@ import { observer } from 'mobx-react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { NavigationState, Step } from '../state';
 
-interface PageHeaderProps {
-  nav: NavigationState;
-  back?: (() => any) | false | null;
-  next?: (() => any) | false | null;
-  title?: string;
-  translucent?: boolean;
-  modal?: boolean;
-  noProgress?: boolean;
-}
+const { default: styled } = require<any>('styled-components');
 
-@observer
-export class PageHeader extends React.Component<PageHeaderProps, {}> {
-  onBack() {
-    if (typeof this.props.back === 'function') {
-      this.props.back();
-    } else {
-      this.props.nav.markPreviousStepIncomplete();
-    }
+
+export { default as Page } from './Page';
+export { default as PageHeader } from './PageHeader';
+export { default as Button } from './Button';
+
+
+export const PageContent = styled.div`
+  flex-grow: 1;
+
+  display: flex;
+  flex-direction: column;
+`;
+
+
+export const Section = styled.div`
+  padding: 1rem;
+  & p {
+    margin: 1rem 0;
+  }
+  & p:first-child {
+    margin-top: 0;
+  }
+  & p:last-child {
+    margin-bottom: 0;
   }
 
-  onNext() {
-    if (typeof this.props.next === 'function') {
-      this.props.next();
-    }
-  }
-
-  render() {
-    const nav = this.props.nav;
-    const backAvailable = nav.currentStep > 0 && this.props.back !== false;
-    const nextAvailable = nav.currentStep < Step.Dashboard - 1 && this.props.next != null;
-    const backEnabled = backAvailable;
-    const nextEnabled = typeof this.props.next === 'function';
-
-    let progressDots: any[] = [];
-    for (let i = Step.BeginSetup; i < Step.Dashboard; i++) {
-      let complete = nav.currentStep >= i;
-      progressDots.push(<div key={i} className={'progress-dot ' + (complete ? 'complete' : '')} />);
-    }
-
-    return <div className={['PageHeader', this.props.translucent ? 'translucent' : 'opaque'].join(' ')}>
-      {/*<div className='PageSpinner'>
-        <div>
-          <img src={require<string>('../assets/spinner.svg')}/>
-        </div>
-      </div>*/}
-      <div className="header-buttons">
-        <a className={'back-button' + (backAvailable ? '' : ' invisible')}
-          onClick={() => this.onBack()} disabled={!backEnabled}>
-          {this.props.modal ? 'Close' : 'Back'}</a>
-        {!this.props.noProgress && <div className="progress">
-          {progressDots}
-        </div>}
-        <a className={'next-button' + (nextAvailable ? '' : ' invisible')}
-          onClick={() => this.onNext()} disabled={!nextEnabled}>Next</a>
-      </div>
-      {this.props.title && <h1>{this.props.title || ''}</h1>}
-    </div>;
-  }
-}
-
-interface PageProps {
-  loading?: boolean;
-  modal?: boolean;
-  visible?: boolean;
-}
-
-@observer
-export class Page extends React.Component<PageProps, {}> {
-  @observable activelyLoading = false;
-  @observable justFinishedLoading = false;
-
-  componentDidMount() {
-//    console.log('MOUNT');
-    if (this.props.loading) {
-      setTimeout(() => {
-        this.activelyLoading = true;
-      });
-    }
-  }
-
-  componentWillReceiveProps(nextProps: PageProps) {
-    this.activelyLoading = !!nextProps.loading;
-    if (this.props.loading && !this.activelyLoading) {
-      this.justFinishedLoading = true;
-      setTimeout(() => {
-        this.justFinishedLoading = false;
-      }, 700);
-    }
-  }
-
-  render() {
-    let classNames = ['Page'];
-    if (this.activelyLoading) {
-      classNames.push('loading');
-    } else if (this.justFinishedLoading) {
-      classNames.push('loaded');
-    }
-    this.props.modal && classNames.push('modal-page');
-
-    let page = <div key="page" className={classNames.join(' ')}>
-      <div className="PageLoader" />
-      {this.props.children}
-    </div>;
-
-    if (this.props.modal) {
-      return <ReactCSSTransitionGroup
-        transitionName={ {
-          enter: 'modal-enter',
-          leave: 'modal-leave',
-          appear: 'modal-enter'
-        } }
-        transitionEnterTimeout={300}
-        transitionAppear={true}
-        transitionAppearTimeout={300}
-        transitionLeaveTimeout={300}>
-        {this.props.visible && page}
-      </ReactCSSTransitionGroup>
-    } else {
-      return page;
-    }
-  }
-}
-
-@observer
-export class PageContent extends React.Component<{}, {}> {
-  render() {
-    return <div className="PageContent">
-      {this.props.children}
-    </div>;
-  }
-}
-
-
-export let TutorialImage = (props: {src: string}) => {
-  return <section className="TutorialImage"><img src={props.src} /></section>;
-};
+  flex-grow: ${(props: any) => props.grow ? 1 : 0};
+  display: ${(props: any) => (props.flexVertical || props.flexHorizontal) ? 'flex' : 'block'};
+  ${(props: any) => props.flexVertical && 'flex-direction: column;'}
+`;

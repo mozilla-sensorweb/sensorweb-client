@@ -3,6 +3,7 @@ import 'babel-polyfill';
 
 //import './ui/index.css';
 import './index.html';
+import './styles';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -12,13 +13,10 @@ import { NavigationState, Step } from './state';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import WelcomePage from './pages/WelcomePage';
-import BeginSetupPage from './pages/BeginSetupPage';
 import AllowLocationPage from './pages/AllowLocationPage';
 import SelectLocationPage from './pages/SelectLocationPage';
 import EnableBluetoothPage from './pages/EnableBluetoothPage';
 import FindingSensorPage from './pages/FindingSensorPage';
-import CompassPage from './pages/CompassPage';
-import AltitudePage from './pages/AltitudePage';
 import WifiCredentialsPage from './pages/WifiCredentialsPage';
 import DashboardPage from './pages/DashboardPage';
 
@@ -42,9 +40,6 @@ class Root extends React.Component<RootProps, {}> {
       [Step.Welcome]:
       <WelcomePage nav={nav} />,
 
-      [Step.BeginSetup]:
-      <BeginSetupPage nav={nav} />,
-
       [Step.AllowLocation]:
       <AllowLocationPage nav={nav} />,
 
@@ -52,18 +47,6 @@ class Root extends React.Component<RootProps, {}> {
       <SelectLocationPage nav={nav} location={appState.location} saveLocation={(location) => {
         console.log('SAVED LOC', location.lat(), location.lng());
         appState.location = location;
-      } } />,
-
-      [Step.Compass]:
-      <CompassPage nav={nav}
-        heading={appState.heading}
-        location={appState.location as google.maps.LatLng} saveCompassDirection={(degrees) => {
-        appState.heading = degrees;
-      } } />,
-
-      [Step.Altitude]:
-      <AltitudePage nav={nav} altitude={appState.altitude} saveAltitude={(altitude) => {
-        appState.altitude = altitude;
       } } />,
 
       [Step.Wifi]:

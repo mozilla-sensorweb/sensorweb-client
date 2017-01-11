@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, PageHeader, PageContent, TutorialImage } from '../ui';
+import { Page, PageHeader, PageContent, Section, Button } from '../ui';
 import { NavigationState } from '../state';
 import { BluetoothManager } from '../bluetooth';
 
@@ -13,12 +13,10 @@ export default function EnableBluetoothPage(props: EnableBluetoothPageProps) {
       <PageHeader nav={props.nav} title='Enable Bluetooth'
         next={() => props.bluetoothManager.enable()} />
       <PageContent>
-        <section className="instruction" style={{flexGrow: 1}}>
+        <Section>
           <p>Please enable bluetooth to continue.</p>
-        </section>
-        <section>
-          <a className="button" onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</a>
-        </section>
+          <Button onClick={() => props.bluetoothManager.enable()}>Enable Bluetooth</Button>
+        </Section>
       </PageContent>
     </Page>;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
-import { Page, PageHeader, PageContent, TutorialImage } from '../ui';
+import { Page, PageHeader, PageContent, Section } from '../ui';
 import { NavigationState } from '../state';
 
 interface AllowLocationPageProps {
@@ -20,21 +20,15 @@ export default class AllowLocationPage extends React.Component<AllowLocationPage
       <PageHeader nav={this.props.nav} title="Finding Your Location"
         next={this.submit.bind(this)} />
       <PageContent>
-        <section style={{flexGrow: 1}}>
-          <p className="instruction">
-            Your sensor will send air quality data from your location
-              to our cloud service, anonymously and securely.
-          </p>
-          <br/>
-          <div className="detail">
-            <p>To store accurate data, we’ll need to know your location, direction,
-              altitude, and WiFi connection information. This information will be shared
-              [in ways we will describe in the future].</p>
-          </div>
-        </section>
-        {/*<section>
-          <a className="button" onClick={this.submit.bind(this)}>Allow Location</a>
-        </section>*/}
+        <Section>
+        <p>To connect your sensor, we need to learn a bit more about where your sensor is located.</p>
+        <p>This location information will be used to contribute accurate and local information to everyone using SensorWeb.&nbsp;
+          <strong>While details about your location will not be shown publicly, the rough location of your sensor will be shown on the map.</strong>
+        </p>
+        <p>It will also be used to help bring you data from the closest sensors around you.</p>
+        <hr />
+        <p>Already have a sensor that’s set up? Move your device closer to the sensor to have it reconnect to your phone.</p>
+        </Section>
       </PageContent>
     </Page>;
   }

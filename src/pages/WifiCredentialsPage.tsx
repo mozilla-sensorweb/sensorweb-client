@@ -2,8 +2,9 @@ import React from 'react';
 import { observable, computed } from 'mobx';
 import { observer } from 'mobx-react';
 import { uniqBy } from 'lodash';
+const { default: styled } = require<any>('styled-components');
 
-import { Page, PageHeader, PageContent } from '../ui';
+import { Page, PageHeader, PageContent, Section } from '../ui';
 import { NavigationState } from '../state';
 
 export interface WifiScanResult {
@@ -177,23 +178,23 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
           this.choosingNetwork = false;
         } } />
         <PageContent>
-          <section className="instruction">
+          <Section>
             <p>Select the Wi-Fi network you want your sensor to use.</p>
-          </section>
-          <section style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-            <ul className="list" style={{ flexGrow: 1, flexBasis: '100px' }}>
+          </Section>
+          <Section grow flexVertical>
+            <List>
               {this.availableNetworks.map((network) =>
                 <li key={network.SSID}
                   data-ssid={network.SSID}
                   onClick={(e) => this.onNetworkSelected(network)}>
                   {networkRequiresPassword(network) &&
                     <img src={require<string>('../assets/lock.svg')}
-                      className="wifi-password-lock-icon" />}
+                      style={{float: 'right', width: '1em', height: '1.4em'}} />}
                   {network.SSID}
                 </li> /* XXX: lock icon */
               )}
-            </ul>
-          </section>
+            </List>
+          </Section>
         </PageContent>
       </Page>
     );
@@ -206,10 +207,10 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
         <PageHeader nav={this.props.nav} title="Connect to Wi-Fi"
           next={this.isValid() && this.submit.bind(this)} />
         <PageContent>
-          <section className="instruction">
+          <Section>
             <p>Enter the password of your Wi-Fi network.</p>
-          </section>
-          <section>
+          </Section>
+          <Section>
             <p><label htmlFor="password">Network Name</label><br />
               <input id="ssid"
                 type="text"
@@ -227,11 +228,30 @@ export default class WifiCredentialsPage extends React.Component<WifiCredentials
                   onChange={(e) => this.typedPassword = e.currentTarget.value} />
               </p>
             }
-            <p className="detail"><a href="#" onClick={(e) => this.onSelectAnotherNetwork()}>
+            <p><a href="#" onClick={(e) => this.onSelectAnotherNetwork()}>
               Choose a different Wi-Fi network</a></p>
-          </section>
+          </Section>
         </PageContent>
       </Page>
     );
   }
 }
+
+const List = styled.ul`
+  flex-grow: 1;
+  flex-basis: 100px;
+  list-style: none;
+  padding-left: 0;
+  border: 1px solid #999;
+  overflow-y: scroll;
+  background: white;
+  & li {
+    border-bottom: 1px solid #eee;
+    padding: 0.5em 1em;
+
+    &:active {
+      color: white;
+      background-color: black;
+    }
+  }
+`;

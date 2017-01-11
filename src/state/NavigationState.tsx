@@ -4,11 +4,10 @@ import { observer } from 'mobx-react';
 
 export enum Step {
   Welcome,
-  BeginSetup,
   AllowLocation,
   SelectLocation,
-  Compass,
-  Altitude,
+  // Compass,
+  // Altitude,
   Wifi,
   EnableBluetooth,
   FindSensor,

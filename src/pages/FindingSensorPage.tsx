@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, PageHeader, PageContent, TutorialImage } from '../ui';
+import { Page, PageHeader, PageContent, Section } from '../ui';
 import { NavigationState } from '../state';
 import { observer } from 'mobx-react';
 import { when } from 'mobx';
@@ -97,13 +97,12 @@ export default class FindingSensorPage extends React.Component<FindingSensorPage
     return <Page>
       <PageHeader nav={this.props.nav} title='Finding Sensor' />
       <PageContent>
-        {/*<TutorialImage src={require<string>('../assets/finding-sensor.svg')} />*/}
-        <section className="instruction">
+        <Section>
           <p>SSID: {state.ssid} {state.password}<br/>
             Altitude: {state.altitude}<br/>
 
             Direction: {state.heading}</p>
-        </section>
+        </Section>
         <img className="InlineSpinner" src={require<string>('../assets/spinner.svg')}/>
         <div>
           <p className="instruction">Hold your phone near the sensor.</p>

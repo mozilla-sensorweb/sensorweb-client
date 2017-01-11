@@ -25,11 +25,11 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin([BUILD_DIR]),
     new webpack.LoaderOptionsPlugin({
-      minimize: true,
-      debug: true
+      minimize: isProd,
+      debug: !isProd
     }),
     new webpack.optimize.UglifyJsPlugin({
-      compress: true,
+      compress: isProd,
       mangle: false,    // DEMO ONLY: Don't change variable names.
       beautify: true,   // DEMO ONLY: Preserve whitespace
       output: {
